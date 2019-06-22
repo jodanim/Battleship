@@ -15,19 +15,35 @@
 #include <vector>
 #include <thread>
 
+
+
 struct PacketHeader{
 	unsigned int to;															// Receiver
 	unsigned int from;															// Sender
-	unsigned char size;															// value between 0 and 56 defining the size on bytes of the rest of the package
-};
-
-struct Packet{
-	PacketHeader header;														
-	std::string data;															
+	unsigned int dataSize;														// value between 0 and 52
 };
 
 const int MAXWIRESIZE = 64;
 const int MAXDATASIZE = MAXWIRESIZE - sizeof(PacketHeader);
+
+struct Packet{
+	PacketHeader header;														
+	std::string data;		
+	std::string getBytes(){
+		unsigned char buffer[MAXWIRESIZE];
+		memcpy(buffer,(const unsigned char*)&header,MAXWIRESIZE-MAXDATASIZE);
+		memcpy(buffer+12,(const unsigned char*)data.c_str(),MAXDATASIZE);
+		for(int i=0;i<MAXWIRESIZE;i++)
+			printf("%02X ",buffer[i]);
+		printf("\n");
+		
+		std::cout<<std::endl<<"salida: "<<std::string((char*)buffer+12)<<std::endl<<std::endl;
+		
+
+		
+		return std::string((const char *)buffer,MAXWIRESIZE-MAXDATASIZE+header.dataSize);
+	};												
+};
 
 class Network{
 	public:
@@ -42,20 +58,22 @@ class Network{
 
 
 	private:
-		unsigned int ip;														// This machine id.
-		Socket socket;													
+		std::string intIptoStringIp(unsigned int ip);							// Ip converisón from int to string.
+		unsigned int stringIptoIntIp(std::string ip);							// Ip converisón from string to int.
+		void packetToByteArray(Packet packet,unsigned char * array);
+		Packet byteArrayToPacket(const unsigned char * array);
+		unsigned int byteArrayToInt(const unsigned char * array);
+		std::string getDefaultInterface();
+		std::string getLocalIp(int family = AF_INET);
 
+		FileManager fileManager;
+
+		unsigned int ip;														// This machine id.
+		Socket * socket;
 
 		bool sendingPacket;
 		bool packetAvailable;
 		double reliability;
-
-		std::string intIptoStringIp(unsigned int ip);							// Ip converisón from int to string.
-		unsigned int stringIptoIntIp(std::string ip);							// Ip converisón from string to int.
-		
-		FileManager fileManager;
-		std::string getDefaultInterface();
-		std::string getLocalIp(int family = AF_INET);
 
 		std::vector<Packet> receivedPackets;
 };

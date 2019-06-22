@@ -5,29 +5,27 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <ifaddrs.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
-#include <errno.h>
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cerrno>
+#include <string>
 
 class Socket{
 	public:
-		Socket(char t = 's', bool ipv6 = false);
+		Socket();
 		Socket(int new_sockfd);
 		~Socket();
-		int Connect(char * host, int port);
-		int Connect(char * host, char * service);
-		int Read(char * text, int len);
-		int Write(char * text);
-		int Shutdown(int);
-		int Close();
+		int Connect(std::string host, int port);
 		int Listen(int queue);
 		int Bind(int port);
+		std::string Read(int len);
+		int Write(std::string text);
 		Socket* Accept();
-		int HostnameToIp(char *hostname, char *ip);
-		char * getLocalIp(const char *interface);
+		int Shutdown(int);
+		int Close();
 	private:
 		int sockfd;
 };
