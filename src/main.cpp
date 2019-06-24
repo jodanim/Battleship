@@ -19,8 +19,7 @@
 #include <thread>
 
 int main(int argc, char**argv){
-    Network n;
-    
+	std::cout<<"Cross Compiled\n";
     return EXIT_SUCCESS;
 }
 
