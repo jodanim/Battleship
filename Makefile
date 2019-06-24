@@ -1,92 +1,99 @@
-all: main main_d finished
+all: compile compile_d finished
 
 #################################################################################################################################################################################
 
-Socket.obj: lib/Socket.hpp src/Socket.cpp
-	@echo "\033[1;35mGenerating Socket object code\033[0m"
-	@g++ -c src/Socket.cpp -o obj/Socket.obj
+obj/Socket.obj: src/Socket.cpp
+	@echo "\033[1;35mGenerating Socket object code $@\033[0m"
+	@g++ -c $^ -o $@
 
 
-Socket.obj_d: lib/Socket.hpp src/Socket.cpp
+obj/debug/Socket.obj: src/Socket.cpp
 	@echo "\033[1;36mGenerating Socket debug object code\033[0m"
-	@g++ -g -c src/Socket.cpp -o obj/debug/Socket.obj
+	@g++ -g -c $^ -o $@
 
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-Time.obj: lib/Time.hpp src/Time.cpp
+obj/Time.obj: src/Time.cpp
 	@echo "\033[1;35mGenerating Time object code\033[0m"
-	@g++ -c src/Time.cpp -o obj/Time.obj
+	@g++ -c $^ -o $@
 
 
-Time.obj_d: lib/Time.hpp src/Time.cpp
+obj/debug/Time.obj: src/Time.cpp
 	@echo "\033[1;36mGenerating Time debug object code\033[0m"
-	@g++ -g -c src/Time.cpp -o obj/debug/Time.obj
+	@g++ -g -c $^ -o $@
 
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-MessageHandler.obj: lib/MessageHandler.hpp src/MessageHandler.cpp
+obj/MessageHandler.obj: src/MessageHandler.cpp
 	@echo "\033[1;35mGenerating MessageHandler object code\033[0m"
-	@g++ -c src/MessageHandler.cpp -o obj/MessageHandler.obj
+	@g++ -c $^ -o $@
 
 
-MessageHandler.obj_d: lib/MessageHandler.hpp src/MessageHandler.cpp
+obj/debug/MessageHandler.obj: src/MessageHandler.cpp
 	@echo "\033[1;36mGenerating MessageHandler debug object code\033[0m"
-	@g++ -g -c src/MessageHandler.cpp -o obj/debug/MessageHandler.obj
+	@g++ -g -c $^ -o $@
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-FileManager.obj: lib/FileManager.hpp src/FileManager.cpp
+obj/FileManager.obj: src/FileManager.cpp
 	@echo "\033[1;35mGenerating FileManager object code\033[0m"
-	@g++ -c src/FileManager.cpp -o obj/FileManager.obj
+	@g++ -c $^ -o $@
 
 
-FileManager.obj_d: lib/FileManager.hpp src/FileManager.cpp
+obj/debug/FileManager.obj: src/FileManager.cpp
 	@echo "\033[1;36mGenerating FileManager debug object code\033[0m"
-	@g++ -g -c src/FileManager.cpp -o obj/debug/FileManager.obj
+	@g++ -g -c $^ -o $@
 
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-Network.obj: lib/Network.hpp src/Network.cpp
+obj/Network.obj: src/Network.cpp
 	@echo "\033[1;35mGenerating Network object code\033[0m"
-	@g++ -pthread -c src/Network.cpp -o obj/Network.obj
+	@g++ -c $^ -o $@
 
 
-Network.obj_d: lib/Network.hpp src/Network.cpp
+obj/debug/Network.obj: src/Network.cpp
 	@echo "\033[1;36mGenerating Network debug object code\033[0m"
-	@g++ -pthread -g -c src/Network.cpp -o obj/debug/Network.obj
+	@g++ -g -c $^ -o $@
 	
 #################################################################################################################################################################################
 
-main.obj: src/main.cpp
+obj/main.obj: src/main.cpp
 	@echo "\033[1;35mGenerating main object code\033[0m"
-	@g++ -c src/main.cpp -o obj/main.obj 
+	@g++ -c $^ -o $@
 
 
-main.obj_d: src/main.cpp
+obj/debug/main.obj: src/main.cpp
 	@echo "\033[1;36mGenerating main debug object code\033[0m"
-	@g++ -g -c src/main.cpp -o obj/debug/main.obj
+	@g++ -g -c $^ -o $@
 
 	
 #################################################################################################################################################################################
 
-main: compileMessage Socket.obj MessageHandler.obj FileManager.obj Time.obj Network.obj  main.obj 
+bin/main: obj/Socket.obj obj/MessageHandler.obj obj/FileManager.obj obj/Time.obj obj/Network.obj  obj/main.obj
 	@echo "\033[1;35mGenerating executable \033[0m"
-	@g++ -pthread obj/main.obj obj/Socket.obj obj/MessageHandler.obj obj/FileManager.obj obj/Time.obj obj/Network.obj -o bin/main
+	@g++ -pthread $^ -o $@
 
 
-main_d: compileMessage Socket.obj_d MessageHandler.obj_d FileManager.obj_d  Time.obj_d Network.obj_d main.obj_d 
+bin/debug/main: obj/debug/Socket.obj obj/debug/MessageHandler.obj obj/debug/FileManager.obj obj/debug/Time.obj obj/debug/Network.obj obj/debug/main.obj 
 	@echo "\033[1;36mGenerating debug executable\033[0m"
-	@g++ -pthread -g obj/debug/main.obj obj/debug/Socket.obj obj/debug/MessageHandler.obj obj/debug/FileManager.obj obj/debug/Time.obj obj/debug/Network.obj -o bin/debug/main
+	@g++ -pthread -g $^ -o $@
 
 #################################################################################################################################################################################
 
-run:main runMessage 
+
+compile:compileMessage bin/main 
+	@echo "\033[1;35mCompiled\033[0m"
+	
+compile_d:compileMessage bin/debug/main
+	@echo "\033[1;36mDebug compiled\033[0m"
+	 
+run:compile runMessage 
 	@.\/bin/main 
 	@make finished --no-print-directory
-debug:main_d debugMessage
+debug:compile_d debugMessage
 	@gdb bin/debug/main
 	@make finished --no-print-directory
 
