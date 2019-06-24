@@ -1,4 +1,4 @@
-all: main main_d main_aarch64 finished
+all: main main_d finished
 
 #################################################################################################################################################################################
 
@@ -63,12 +63,12 @@ main.obj_d: src/main.cpp
 	
 #################################################################################################################################################################################
 
-main: compileMessage Semaphore.obj Mailbox.obj Socket.obj MessageHandler.obj FileManager.obj Time.obj Network.obj  main.obj 
-	@g++ -pthread obj/main.obj obj/Semaphore.obj obj/Mailbox.obj obj/Socket.obj obj/MessageHandler.obj obj/FileManager.obj obj/Time.obj obj/Network.obj -o bin/main
+main: compileMessage Socket.obj MessageHandler.obj FileManager.obj Time.obj Network.obj  main.obj 
+	@g++ -pthread obj/main.obj obj/Socket.obj obj/MessageHandler.obj obj/FileManager.obj obj/Time.obj obj/Network.obj -o bin/main
 	@echo "\033[1;35mGenerating executable \033[0m"
 
-main_d: compileMessage Semaphore.obj_d Mailbox.obj_d Socket.obj_d MessageHandler.obj_d FileManager.obj_d  Time.obj_d Network.obj_d main.obj_d 
-	@g++ -pthread -g obj/debug/main.obj obj/debug/Semaphore.obj obj/debug/Mailbox.obj obj/debug/Socket.obj obj/debug/MessageHandler.obj obj/debug/FileManager.obj obj/debug/Time.obj obj/debug/Network.obj -o bin/debug/main
+main_d: compileMessage Socket.obj_d MessageHandler.obj_d FileManager.obj_d  Time.obj_d Network.obj_d main.obj_d 
+	@g++ -pthread -g obj/debug/main.obj obj/debug/Socket.obj obj/debug/MessageHandler.obj obj/debug/FileManager.obj obj/debug/Time.obj obj/debug/Network.obj -o bin/debug/main
 	@echo "\033[1;36mGenerating debug executable\033[0m"
 
 #################################################################################################################################################################################
