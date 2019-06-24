@@ -1,6 +1,36 @@
 #include "../lib/MessageHandler.hpp"
-#include <exception> 
 
+void MessageHandler::msg(MessageId id, std::string dataA, std::string dataB, std::string dataC){
+	switch (id){
+		case noIPCMessages:
+			std::cout<<std::endl<< "No ipc messages available" <<std::endl;
+			break;	
+//-----------------------------------------------------------------------------------------------------------------------------
+		case StartProgram:
+			std::cout<<std::endl<< dye("Program started, time unit: " + dataA,CYAN) <<std::endl<<std::endl;
+			break;
+		case StartTime:
+			std::cout<<std::endl<<dye("Stage " + dataA +  " started at: " + dataB + " " + singleOut(dataB,dataC),std::stoi(dataA)+54,1) <<std::endl<<std::endl;
+			break;
+		case EndTime:
+			std::cout<<std::endl<<dye("Stage "+ dataA + " ended, duration: " + dataB + " " + singleOut(dataB,dataC),std::stoi(dataA)+54,1) <<std::endl<<std::endl;
+			break;
+		case FinishProgram:
+			std::cout<<std::endl<<dye("Program finished at: " + dataA + " " + singleOut(dataA,dataB),CYAN) <<std::endl<<std::endl;
+			break;
+		default:
+			std::cout<< dye("UNHANDLED MESSAGE: " + std::to_string(id) ,MAGENTA);
+			break;
+	}
+}
+
+void MessageHandler::msg(MessageId id, double dataA, double dataB,std::string dataC){
+	msg(id,doubleToString(dataA),doubleToString(dataB),dataC);
+}
+
+void MessageHandler::msg(MessageId id, double dataA, std::string dataB){
+	msg(id,doubleToString(dataA),dataB);
+}
 
 void MessageHandler::error(ErrorId id, std::string dataA){
 	std::cout<<std::endl<< dye("ERROR: ",RED,1);
@@ -35,36 +65,27 @@ void MessageHandler::error(ErrorId id, std::string dataA){
 	exit (EXIT_FAILURE);
 }
 
-void MessageHandler::msg(MessageId id, std::string dataA, std::string dataB, std::string dataC){
-	switch (id){
-		case noIPCMessages:
-			std::cout<<std::endl<< "No ipc messages available" <<std::endl;
-			break;	
-//-----------------------------------------------------------------------------------------------------------------------------
-		case StartProgram:
-			std::cout<<std::endl<< dye("Program started, time unit: " + dataA,CYAN) <<std::endl<<std::endl;
-			break;
-		case StartTime:
-			std::cout<<std::endl<<dye("Stage " + dataA +  " started at: " + dataB + " " + singleOut(dataB,dataC),std::stoi(dataA)+54,1) <<std::endl<<std::endl;
-			break;
-		case EndTime:
-			std::cout<<std::endl<<dye("Stage "+ dataA + " ended, duration: " + dataB + " " + singleOut(dataB,dataC),std::stoi(dataA)+54,1) <<std::endl<<std::endl;
-			break;
-		case FinishProgram:
-			std::cout<<std::endl<<dye("Program finished at: " + dataA + " " + singleOut(dataA,dataB),CYAN) <<std::endl<<std::endl;
-			break;
-		default:
-			std::cout<< dye("UNHANDLED MESSAGE: " + std::to_string(id) ,MAGENTA);
-			break;
-	}
+
+
+void MessageHandler::debug(std::string data, bool lf){
+	if(lf)std::cout<<std::endl<<std::endl;
+	std::cout<<data;
+	if(lf)std::cout<<std::endl<<std::endl;
+	else std::cout<<", ";
 }
 
-void MessageHandler::msg(MessageId id, double dataA, double dataB,std::string dataC){
-	msg(id,doubleToString(dataA),doubleToString(dataB),dataC);
+void MessageHandler::debug(int data, bool lf){
+	if(lf)std::cout<<std::endl<<std::endl;
+	std::cout<<data;
+	if(lf)std::cout<<std::endl<<std::endl;
+	else std::cout<<", ";
 }
 
-void MessageHandler::msg(MessageId id, double dataA, std::string dataB){
-	msg(id,doubleToString(dataA),dataB);
+void MessageHandler::debug(char * data, bool lf){
+	if(lf)std::cout<<std::endl<<std::endl;
+	std::cout<<data;
+	if(lf)std::cout<<std::endl<<std::endl;
+	else std::cout<<", ";
 }
 
 std::string MessageHandler::singleOut(std::string cnt, std::string unit){

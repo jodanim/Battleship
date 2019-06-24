@@ -1,7 +1,6 @@
 
 \.vscode/
 
-bin/*
 obj/*
 
 src/OTHERS/

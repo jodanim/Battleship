@@ -11,22 +11,31 @@ Network::Network(int port, double reliability){
 }
 
 Network::~Network(){
-
+	send(intIptoStringIp(ip),1101,"Mensaje");
 }
 
-void Network::send(std::string ip, std::string data){
-	PacketHeader hdr;
-	hdr.from = this->ip;
-	hdr.to = stringIptoIntIp(ip);
-
+void Network::send(std::string ip, int port, std::string data){
 	if(rand()%100+1 > reliability*100){
 		return;
 	}
-
-	if(data.size()>MAXDATASIZE){
-		data.resize(MAXDATASIZE);
+	PacketHeader header;
+	header.from = this->ip;
+	header.to = stringIptoIntIp(ip);
+	if(data.size()+1>MAXDATASIZE){
+		data.resize(MAXDATASIZE-1);
 	}
-	hdr.dataSize = data.size();
+	header.dataSize = data.size();
+	Packet packet;
+	packet.header = header;
+	packet.data = data;
+	socket->Connect(ip,port);
+	// int childpid = fork();
+	// if(childpid<0)perror("msg");
+	// else if(childpid == 0){
+	socket->Write(packet.getBytes());
+	// socket->close();
+	// exit()
+	// }
 }
 
 Packet Network::receive(){
@@ -35,21 +44,26 @@ Packet Network::receive(){
 	return received;
 }
 
+void Network::sendDone(){
+	sendingPacket = false;
+}
+
 void Network::checkPacketAvailable(){
 	Socket * reader;
 	while(true){
 		reader = socket->Accept();
 		int childpid = fork();
-		if(childpid < 0)perror("server: Error de bifurcación.");
+		if(childpid < 0)perror("Network:send Error de bifurcación.");
 		else if (0 == childpid) { 
 			std::string packet = reader->Read(MAXWIRESIZE);
-			// receivedPackets.insert(receivedPackets.begin(),stringToPacket(packet));
-			_exit(0);	
+			receivedPackets.push_back(stringToPacket(packet));
+			_exit(0);
 		}
 		reader->Close();
 	}
-	
 }
+
+//-----------------------------------------------------------------------------------------------------------------------------
 
 std::string Network::intIptoStringIp(unsigned int ip){
 	std::string stringIp = "";
@@ -85,27 +99,26 @@ unsigned int Network::stringIptoIntIp(std::string ip){
 	return intIp;
 }
 
-// unsigned int Network::byteArrayToInt(const unsigned char * array){
-//     unsigned int first = array[0];
-//     unsigned int second = array[1]<<8;
-//     unsigned int third = array[2]<<16;
-//     unsigned int fourth = array[3]<<24;
-//     return first+second+third+fourth;
-// }
+unsigned int Network::byteArrayToInt(const unsigned char * array){
+    unsigned int first = array[0];
+    unsigned int second = array[1]<<8;
+    unsigned int third = array[2]<<16;
+    unsigned int fourth = array[3]<<24;
+    return first+second+third+fourth;
+}
 
-// Packet Network::byteArrayToPacket(const unsigned char * array){
-//     Packet packet;
-//     packet.header.to = byteArrayToInt(array);
-//     packet.header.from = byteArrayToInt(array+4);
-//     packet.header.dataSize = byteArrayToInt(array+8);
-//     strncpy(packet.data,(char*)array+12,packet.header.dataSize);
-//     unsigned int to = byteArrayToInt(array+8);
-//     return packet;
-// }
+Packet Network::stringToPacket(std::string bytes){
+    unsigned char buffer[MAXWIRESIZE];
+    for(int i=0;i<MAXWIRESIZE;i++)buffer[i] = bytes.c_str()[i]&0xFF;
+    Packet packet;
+    packet.header.to = byteArrayToInt(buffer);
+    packet.header.from = byteArrayToInt(buffer+4);
+    packet.header.dataSize = byteArrayToInt(buffer+8);
+    packet.data = std::string((char*)buffer+12);
+    return packet;
+}
 
-// void Network::packetToByteArray(Packet packet,unsigned char * array){
-// 	memcpy(array,(const unsigned char*)&packet,MAXWIRESIZE);
-// }
+//-----------------------------------------------------------------------------------------------------------------------------
 
 std::string Network::getDefaultInterface(){
 	fileManager.open("/proc/net/route");
