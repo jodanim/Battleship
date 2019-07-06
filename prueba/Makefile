@@ -37,7 +37,7 @@ run_client:compile runMessage
 	@make finished --no-print-directory
 		 
 run_server:compile runMessage 
-	@.\/bin/client
+	@.\/bin/server
 	@make finished --no-print-directory
 
 

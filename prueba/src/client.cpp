@@ -1,35 +1,60 @@
-#include "../lib/Socket.hpp"
-/**
+// #include "../lib/Socket.hpp"
+// /**
 
-int main(int argc, char**argv){
-	int childpid;
-	Socket *s;
-	s = new Socket();
-	s->Connect("192.168.0.16",1101);
-	childpid = fork();
-	if(childpid < 0)perror("client: Error de bifurcación.");
-	else if (0 == childpid) { 
-		s->Write(argv[1],1101);
-		_exit(0);	
-	}
-	s->Close();
-    return EXIT_SUCCESS;
-}
+// int main(int argc, char**argv){
+// 	int childpid;
+// 	Socket *s;
+// 	s = new Socket();
+// 	s->Connect("192.168.0.16",1101);
+// 	childpid = fork();
+// 	if(childpid < 0)perror("client: Error de bifurcación.");
+// 	else if (0 == childpid) { 
+// 		s->Write(argv[1],1101);
+// 		_exit(0);	
+// 	}
+// 	s->Close();
+//     return EXIT_SUCCESS;
+// }
 
-*/
+// */
 
-#include <stdio.h> 
-#include <stdlib.h> 
-#include <unistd.h> 
-#include <string.h> 
-#include <sys/types.h> 
-#include <sys/socket.h> 
-#include <arpa/inet.h> 
-#include <netinet/in.h> 
+// #include <stdio.h> 
+// #include <stdlib.h> 
+// #include <unistd.h> 
+// #include <string.h> 
+// #include <sys/types.h> 
+// #include <sys/socket.h> 
+// #include <arpa/inet.h> 
+// #include <netinet/in.h> 
     
-// Driver code 
+// // Driver code 
+// int main() { 
+//     Socket socket;      
+//     socket.Write("Hello from client",1101);
+//     return 0; 
+// } 
+
+
+
+#include "../lib/Socket.hpp"
+
+#define PORT     1101 
+#define MAXLINE 1024 
+  
 int main() { 
-    Socket socket;      
-    socket.Write("Hello from client",1101);
+    int sockfd; 
+    char buffer[MAXLINE]; 
+    char *hello = (char *)"Hello from client"; 
+  
+    Socket s(PORT);
+            
+    int n; 
+    s.Write(hello,"192.168.0.16");
+	printf("Hello message sent.\n"); 
+
+	s.Read(buffer,MAXLINE);
+    printf("Server : %s\n", buffer); 
+  
+    close(sockfd); 
     return 0; 
 } 

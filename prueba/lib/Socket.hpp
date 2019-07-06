@@ -11,23 +11,17 @@
 #include <cstdlib>
 #include <cstring>
 #include <cerrno>
-#include <string>
-
 class Socket{
 	public:
-		Socket();
-		Socket(int new_sockfd);
+		Socket(int port);
 		~Socket();
-		int Connect(std::string host, int port);
-		int Listen(int queue);
-		int Bind(int port);
-		std::string Read(int len,char*buffer);
-		int Write(std::string text, int port);
-		Socket* Accept();
-		int Shutdown(int);
+		int Bind();
+		int Read(char * buffer, int len);
+		int Write(const char * buffer, const char * ip);
 		int Close();
 	private:
 		int sockfd;
-};
+		int port;
 
+};
 #endif
