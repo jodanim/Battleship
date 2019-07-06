@@ -13,15 +13,13 @@
 #include <cerrno>
 class Socket{
 	public:
-		Socket(int port);
+		Socket();
 		~Socket();
-		int Bind();
-		int Read(char * buffer, int len);
-		int Write(const char * buffer, const char * ip);
+		int Bind(int port);
+		int Read(char * buffer, int len, char * ip, unsigned short port);
+		int Write(const char * buffer, const char * ip, unsigned short port);
 		int Close();
 	private:
 		int sockfd;
-		int port;
-
 };
 #endif
