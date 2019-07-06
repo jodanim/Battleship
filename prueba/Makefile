@@ -20,11 +20,11 @@ obj/server.obj: src/server.cpp
 
 ################################################################################
 
-bin/main: obj/Socket.obj obj/client.obj
+bin/client: obj/Socket.obj obj/client.obj
 	@echo "\033[1;35mGenerating \033[0;33m$@\033[0m"
 	@g++ $^ -o $@
 
-bin/main: obj/Socket.obj obj/server.obj
+bin/server: obj/Socket.obj obj/server.obj
 	@echo "\033[1;35mGenerating \033[0;33m$@\033[0m"
 	@g++ $^ -o $@
 
