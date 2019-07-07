@@ -1,75 +1,64 @@
 #include "../lib/Socket.hpp"
-Socket::Socket(){
-	if((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
-		perror("Socket:Constructor"); 
-}
 
-Socket::Socket(int new_sockfd){
-	sockfd = new_sockfd;
+Socket::Socket(){
+	in_addr_t answerAddres = 0;
+	uint16_t answerPort = 0;
+	if((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1){
+		perror("Socket:Constructor"); 
+	}
 }
 
 Socket::~Socket(){
 	Close();
 }
 
-int Socket::Connect(std::string Host, int Port){
-	char ip[15];
-	strncpy(ip, Host.c_str(),15);
-	struct sockaddr_in  addr;
+int Socket::Bind(int port){
+	struct sockaddr_in addr;
 	addr.sin_family = AF_INET;
-	inet_aton(ip, &addr.sin_addr);
-	addr.sin_port = htons(Port);
-	int addrlen = sizeof(addr);
-	int result = connect(sockfd, (sockaddr *) &addr, addrlen);
-	if(result == -1)perror("Socket:ConnectIpv4");
+	addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	addr.sin_port = htons(port);
+	int len = sizeof(addr);
+	int result = bind(sockfd, (const sockaddr *)&addr, len);
+	if(result == -1){
+		perror("Socket:Bind");
+	}
 	return result;
 }
 
-int Socket::Listen(int Queue){
-	int result = listen(sockfd, Queue);
-	if(result == -1)perror("Socket:Listen");
-	return result;
-}
-
-int Socket::Bind(int Port){
-	struct sockaddr_in server_addr;
-	server_addr.sin_family = AF_INET;
-	server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	server_addr.sin_port = htons(Port);
-	int len = sizeof(server_addr);
-	int result = bind(sockfd, (const sockaddr *)&server_addr, len);
-	if(result == -1)perror("Socket:Bind");
-	return result;
-}
-
-std::string Socket::Read(int len){
-	char text[len];
-	if(read(sockfd, text, len) == -1)perror("Socket:Read");
-	return std::string(text);
-}
-
-int Socket::Write(std::string text){
-	int bytes = write(sockfd, text.c_str(), text.size());
-	if(bytes == -1)perror("Socket:Write");
+int Socket::Read(char * buffer, unsigned int len){
+	struct sockaddr_in addr;
+	unsigned int addrlen = sizeof(addr);
+	int bytes = recvfrom(sockfd, buffer, len, 0, (struct sockaddr *) &addr, &addrlen);
+	if(bytes == -1){
+		perror("Socket:Read");
+	}
+	answerPort = ntohs(addr.sin_port);
+	answerAddres = addr.sin_addr.s_addr;
+	buffer[bytes]='\0';
 	return bytes;
 }
 
-Socket * Socket::Accept(){
-	struct sockaddr_in cli_addr;
-	int clilen = sizeof(cli_addr);
-	int new_sockfd = accept(sockfd, (struct sockaddr *) &cli_addr, (socklen_t *) &clilen);
-	if(new_sockfd==-1)perror("Socket:Accept");
-	return new Socket(new_sockfd);
-}
-
-int Socket::Shutdown(int o){
-	int result = shutdown(sockfd, o);
-	if(result == -1)perror("Socket:Shutdown");
-	return result;
+int Socket::Write(std::string message, std::string ip, uint16_t port){
+	port = (port==0)?answerPort:port;								
+	struct sockaddr_in addr;
+	memset(&addr, 0, sizeof(addr)); 
+ 	addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+	if(ip != "") 
+		inet_aton(ip.c_str(),&addr.sin_addr);
+	else 
+		addr.sin_addr.s_addr = answerAddres;
+	int bytes = sendto(sockfd, message.c_str(), message.length(),0, (const struct sockaddr *) &addr, sizeof(addr)); //MSG_CONFIRM
+	if(bytes == -1){
+		perror("Socket:Write");
+	}
+	return bytes;
 }
 
 int Socket::Close(){
 	int result = close(sockfd);
-	if(result == -1)perror("Socket:Close");
+	if(result == -1){
+		perror("Socket:Close");
+	}
 	return result;
 }

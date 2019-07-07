@@ -95,7 +95,7 @@ std::string MessageHandler::singleOut(std::string cnt, std::string unit){
 std::string MessageHandler::doubleToString(double data){
 	std::string casted = std::to_string(data);
 	int l = casted.length()-1;
-	while((casted.at(l) == '0' )){
+	while(casted.at(l) == '0' ){
 		casted = casted.substr(0,l);
 		l--;
 	}
