@@ -18,11 +18,12 @@ class Socket{
 		Socket();
 		~Socket();
 		int Bind(int port);
-		int Read(char * buffer, int len);
+		int Read(char * buffer, unsigned int len);
 		int Write(std::string message, std::string ip = "", uint16_t port = 0);
 		int Close();
 	private:
 		int sockfd;
+		in_addr_t answerAddres;
 		uint16_t answerPort;
 };
 #endif
