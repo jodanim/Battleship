@@ -6,25 +6,33 @@ Time::Time(TimeUnit unit, bool inform){
 	if(inform){
 		stage = 1;
 		initialTime = now();
-		MessageHandler::msg(StartProgram,getTimeUnitName());
+		MessageHandler messageHandler;
+		messageHandler.msg(StartProgram,getTimeUnitName());
 	}
 }
 
 Time::~Time(){
 	if(inform){
 		double diff = (now()-initialTime);
-		MessageHandler::msg(FinishProgram,diff,getTimeUnitName());
+		MessageHandler messageHandler;
+		messageHandler.msg(FinishProgram,diff,getTimeUnitName());
 	}
 }
 
 void Time::start(){
 	startTime = now();
-	if(inform)MessageHandler::msg(StartTime,stage,startTime-initialTime,getTimeUnitName());
+	if(inform){
+		MessageHandler messageHandler;
+		messageHandler.msg(StartTime,stage,startTime-initialTime,getTimeUnitName());
+	}
 }
 
 double Time::end(){
 	double diff = now() - startTime;
-	if(inform)MessageHandler::msg(EndTime,stage++,diff,getTimeUnitName());
+	if(inform){
+		MessageHandler messageHandler;
+		messageHandler.msg(EndTime,stage++,diff,getTimeUnitName());
+	}
 	return diff;
 }
 
