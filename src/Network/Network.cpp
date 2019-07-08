@@ -127,11 +127,13 @@ void Network::getDefaultInterface(char * interface){
 	int pos;
 	do{// search the default interface on every line of the file.
 		fileManager.getLine(buffer);
-		char * c = std::strchr(buffer,'\t');
-		pos = c-buffer+1;
-		strncpy(interface,buffer,pos);
-		interface[pos-1] = '\0';
+		if(strlen(buffer)!=0){
+			char * c = std::strchr(buffer,'\t');
+			pos = c-buffer+1;
+			strncpy(interface,buffer,pos);
+			interface[pos-1] = '\0';
+		}
 	// The deafault interface is the one whose destination is 00000000.
-	}while(strncmp(buffer+pos,"00000000",8)!=0);
+	}while(strncmp(buffer+pos,"00000000",8)!=0&&strlen(buffer)!=0);
 	fileManager.close();
 }
