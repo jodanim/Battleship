@@ -22,13 +22,10 @@ struct PacketHeader{
 	unsigned short port;														// Receiver port
 	unsigned short dataSize;													// value between 0 and 52
 	PacketHeader(){}
+	PacketHeader(unsigned int ip, unsigned short p){to = ip;port = p;}
 	PacketHeader(const char * ip, unsigned short p){
 		Translator translator;
 		to = translator.constCharIptoIntIp(ip);
-		port = p;
-	}
-	PacketHeader(unsigned int ip, unsigned short p){
-		to = ip;
 		port = p;
 	}
 };

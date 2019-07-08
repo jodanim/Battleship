@@ -1,4 +1,4 @@
-#include "../lib/Network.hpp"
+#include "../../lib/Network/Network.hpp"
 #include <iostream>
 
 Network::Network(int port, double reliability){
@@ -18,6 +18,7 @@ Network::Network(int port, double reliability){
 }
 
 Network::~Network(){
+	reliability = 1;
 	PacketHeader header(ip,port);
 	send(header,"end");
 	exit = true;
@@ -27,8 +28,9 @@ Network::~Network(){
 void Network::send(PacketHeader header, const char * data){
 	writeHandler();
 	std::thread(&Network::sendDone, this).detach();
-	if(rand()%100+1 > reliability*100){
-		std::cout<<"failed";
+	int r;
+	if((r = rand()%100+1) > reliability*100){
+		std::cout<<r<<"failed"<<100*reliability<<"\n";
 		return;
 	}
 	Packet packet;

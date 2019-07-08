@@ -1,4 +1,4 @@
-#include "../lib/Translator.hpp"
+#include "../../lib/Network/Translator.hpp"
 
 unsigned int Translator::constCharIptoIntIp(const char * ip){
     MessageHandler messageHandler;
