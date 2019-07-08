@@ -32,7 +32,7 @@ void Network::send(PacketHeader header, const char * data){
 	std::thread(&Network::sendDone, this).detach();
 	int r;
 	if((r = rand()%100+1) > reliability*100){
-		std::cout<<100*reliability<<":"<<r<<"failed"<<<<"\n";
+		std::cout<<100*reliability<<":"<<r<<"failed"<<"\n";
 		return;
 	}
 	Packet packet;
