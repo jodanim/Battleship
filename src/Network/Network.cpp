@@ -73,16 +73,20 @@ void* Network::checkPacketAvailable(){
 }
 
 PacketHeader Network::receive(char * data){
+	std::cout<<"Enter receive"<<"\n";
 	readHandler();
 	Packet received = receivedPackets.front();
     receivedPackets.erase(receivedPackets.begin());
 	strncpy(data,received.data,received.header.dataSize);
+	std::cout<<"Exit receive"<<"\n";
 	return received.header;
 }
 
 void Network::readHandler(){
-	if(receivedPackets.size()==0)packetAvailable=false;
+	std::cout<<"Enter Handler"<<"\n";
+	if(receivedPackets.empty())packetAvailable=false;
 	while(!packetAvailable);
+	std::cout<<"Exit Handler"<<"\n";
 }
 
 Packet Network::byteArrayToPacket(const unsigned char * bytes){
