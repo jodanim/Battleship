@@ -1,4 +1,4 @@
-#include "../lib/Time.hpp"
+#include "../../lib/Network/Time.hpp"
 
 Time::Time(TimeUnit unit, bool inform){
 	this->unit = unit;
