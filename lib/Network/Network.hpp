@@ -11,6 +11,7 @@
 
 #include <vector>
 #include <thread>
+#include <mutex>
 
 #define PROC_NET_ROUTE_LINE_SIZE 128
 #define NETWORK_INTERFACE_MAX_LENGTH 15
@@ -61,6 +62,7 @@ class Network{
 		bool exit;
 
 		Socket socket;
+		std::mutex receiving;
 		std::thread receiver;
 		Translator translator;
 		std::vector<Packet> receivedPackets;

@@ -66,27 +66,27 @@ void* Network::checkPacketAvailable(){
 		unsigned char buffer[MAX_WIRE_SIZE];
 		socket.Read(buffer,MAX_WIRE_SIZE);
 		Packet packet = byteArrayToPacket(buffer);
+		receiving.lock();
 		receivedPackets.push_back(packet);
+		receiving.unlock();
 		packetAvailable = true;
 	}
 	pthread_exit(EXIT_SUCCESS);
 }
 
 PacketHeader Network::receive(char * data){
-	// std::cout<<"Enter receive"<<"\n";
 	readHandler();
 	Packet received = receivedPackets.front();
+	receiving.lock();
     receivedPackets.erase(receivedPackets.begin());
-	if(receivedPackets.empty())packetAvailable=false;
+	packetAvailable = !receivedPackets.empty();
+	receiving.unlock();
 	strncpy(data,received.data,received.header.dataSize);
-	// std::cout<<"Exit receive"<<"\n";
 	return received.header;
 }
 
 void Network::readHandler(){
-	// std::cout<<"Enter Handler"<<"\n";
 	while(!packetAvailable);
-	// std::cout<<"Exit Handler"<<"\n";
 }
 
 Packet Network::byteArrayToPacket(const unsigned char * bytes){
