@@ -1,7 +1,7 @@
 #include "../lib/Socket.hpp"
 
 Socket::Socket(){
-	in_addr_t answerAddres = 0;
+	in_addr_t answerAddress = 0;
 	uint16_t answerPort = 0;
 	if((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1){
 		perror("Socket:Constructor"); 
@@ -38,21 +38,22 @@ int Socket::Read(unsigned char * buffer, unsigned int len){
 		exit(EXIT_FAILURE);
 	}
 	answerPort = ntohs(addr.sin_port);
-	answerAddres = addr.sin_addr.s_addr;
+	answerAddress = addr.sin_addr.s_addr;
 	buffer[bytes]='\0';
 
 	return bytes;
 }
 
-int Socket::Write(const unsigned char * message, int len, const char * ip, uint16_t port){
+int Socket::Write(const unsigned char * message, int len, unsigned int ip, uint16_t port){
 	port = (port==0)?answerPort:port;
 	struct sockaddr_in addr;
  	addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
-	if(ip != NULL)
-		inet_aton(ip,&addr.sin_addr);
+	unsigned int address;
+	if(ip != -1)
+		addr.sin_addr.s_addr = ip;
 	else
-		addr.sin_addr.s_addr = answerAddres;
+		addr.sin_addr.s_addr = answerAddress;
 	int bytes = sendto(sockfd, message, len, 0, (const struct sockaddr *) &addr, sizeof(addr));
 	if(bytes == -1){
 		perror("Socket:Write");

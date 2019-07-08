@@ -4,13 +4,11 @@
 #include "FileManager.hpp"
 #include "MessageHandler.hpp"
 #include "Socket.hpp"
+#include "Translator.hpp"
 
 #include <netdb.h>
 #include <ifaddrs.h>
 
-#include <cstdio>
-
-// #include <algorithm>
 #include <vector>
 #include <thread>
 
@@ -21,8 +19,18 @@
 struct PacketHeader{
 	unsigned int from;															// Sender
 	unsigned int to;															// Receiver
-	// unsigned short port;														// Receiver port
-	unsigned int dataSize;													// value between 0 and 52
+	unsigned short port;														// Receiver port
+	unsigned short dataSize;													// value between 0 and 52
+	PacketHeader(){}
+	PacketHeader(const char * ip, unsigned short p){
+		Translator translator;
+		to = translator.constCharIptoIntIp(ip);
+		port = p;
+	}
+	PacketHeader(unsigned int ip, unsigned short p){
+		to = ip;
+		port = p;
+	}
 };
 
 const int MAXWIRESIZE = 64;
@@ -38,41 +46,34 @@ class Network{
 		Network(int Port, double reliability = 1);
 		~Network();
 
-		void send(const char * ip, int port, const char * data);
+		void send(PacketHeader header, const char * data);
 		void* sendDone();
+		
 		void* checkPacketAvailable();
-
 		PacketHeader receive(char * data);
 	private:
-		FileManager fileManager;
-
-		unsigned int ip;														// This machine id.
+		// Machine ID
+		unsigned int ip;
 		unsigned short port;
-		Socket socket;
 
+		// Control Flags
 		bool sendingPacket;
 		bool packetAvailable;
 		bool exit;
-		double reliability;
-		
-		int packetsSent;
 
-		std::vector<Packet> receivedPackets;
+		Socket socket;
 		std::thread receiver;
-
+		Translator translator;
+		std::vector<Packet> receivedPackets;
+		
+		double reliability;
+		int packetsSent;
+		
 		void readHandler();
 		void writeHandler();
-		void intIptoCharArrayIp(unsigned int ip, char * array);	
-		// std::string intIptoStringIp(unsigned int ip);							// Ip converisón from int to string.
-
-		unsigned int constCharIptoIntIp(const char * ip);							// Ip converisón from string to int.	
-		// unsigned int stringIptoIntIp(std::string ip);							// Ip converisón from string to int.
-		
 		Packet byteArrayToPacket(const unsigned char * bytes);
-		unsigned int byteArrayToInt(const unsigned char * array);
-		void getDefaultInterface(char * interface);
 		void getLocalIp(char * ip, int family = AF_INET);
+		void getDefaultInterface(char * interface);
 };
-
 
 #endif /* NETWORK_HPP */

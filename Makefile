@@ -43,6 +43,18 @@ obj/debug/FileManager.obj: src/FileManager.cpp
 
 #-------------------------------------------------------------------------------
 
+obj/Translator.obj: src/Translator.cpp
+	@echo "\e[1;35mGenerating \e[0;33m$@\e[0m"
+	@g++ -c $^ -o $@
+
+
+obj/debug/Translator.obj: src/Translator.cpp
+	@echo "\e[1;36mGenerating \e[0;33m$@\e[0m"
+	@g++ -g -c $^ -o $@
+
+#-------------------------------------------------------------------------------
+
+
 obj/Network.obj: src/Network.cpp
 	@echo "\e[1;35mGenerating \e[0;33m$@\e[0m"
 	@g++ -c $^ -o $@
@@ -67,15 +79,15 @@ obj/debug/main.obj: src/main.cpp
 
 ################################################################################
 
-bin/main: obj/Socket.obj obj/MessageHandler.obj obj/FileManager.obj obj/Time.obj obj/Network.obj  obj/main.obj
+bin/main: obj/Socket.obj obj/MessageHandler.obj obj/FileManager.obj obj/Time.obj obj/Translator.obj obj/Network.obj obj/main.obj 
 	@echo "\e[1;35mGenerating \e[0;33m$@\e[0m"
 	@g++ -pthread $^ -o $@
 
-bin/client: obj/Socket.obj obj/MessageHandler.obj obj/FileManager.obj obj/Time.obj obj/Network.obj  obj/client.obj
+bin/client: obj/Socket.obj obj/MessageHandler.obj obj/FileManager.obj obj/Time.obj obj/Translator.obj obj/Network.obj obj/client.obj
 	@echo "\e[1;35mGenerating \e[0;33m$@\e[0m"
 	@g++ -pthread $^ -o $@
 
-bin/debug/main: obj/debug/Socket.obj obj/debug/MessageHandler.obj obj/debug/FileManager.obj obj/debug/Time.obj obj/debug/Network.obj obj/debug/main.obj 
+bin/debug/main: obj/debug/Socket.obj obj/debug/MessageHandler.obj obj/debug/FileManager.obj obj/debug/Time.obj obj/debug/Translator.obj obj/debug/Network.obj obj/debug/main.obj 
 	@echo "\e[1;36mGenerating \e[0;33m$@\e[0m"
 	@g++ -pthread -g $^ -o $@
 

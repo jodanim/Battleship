@@ -20,8 +20,7 @@
 
 int main(int argc, char**argv){
     Network n(1102);
-    n.send("192.168.0.16",1101,"supper clean");
+    PacketHeader header("192.168.0.16",1101);
+    n.send(header,"123456789-123456789-123456789-123456789-123456789-123456789-");
     return EXIT_SUCCESS;
 }
-
-
