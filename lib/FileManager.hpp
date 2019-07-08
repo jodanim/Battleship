@@ -1,16 +1,15 @@
 #ifndef FILEMANAGER_HPP
 #define FILEMANAGER_HPP
 
-#include <string>
 #include <fstream>
-#include <iostream>
+#include <cstring>
 
 class FileManager{
 	public:
 		FileManager();
 		~FileManager();
-		void open(std::string path);
-		std::string getLine();
+		void open(const char * path, bool read = true);
+		size_t getLine(char * buffer);
 		void close();
 	private:
 		std::ifstream input;

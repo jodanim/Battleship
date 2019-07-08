@@ -8,22 +8,21 @@
 #include <unistd.h>
 
 #include <cstdio>
-#include <cstdlib>
 #include <cstring>
+#include <cstdlib>
 #include <cerrno>
-#include <string>
 
 class Socket{
 	public:
 		Socket();
 		~Socket();
 		int Bind(int port);
-		int Read(char * buffer, unsigned int len);
-		int Write(std::string message, std::string ip = "", uint16_t port = 0);
+		int Read(unsigned char * buffer, unsigned int len);
+		int Write(const unsigned char * message, int len, unsigned int ip = -1, uint16_t port = 0);
 		int Close();
 	private:
 		int sockfd;
-		in_addr_t answerAddres;
+		in_addr_t answerAddress;
 		uint16_t answerPort;
 };
 #endif
