@@ -19,23 +19,25 @@
 struct PacketHeader{
 	unsigned int from;															// Sender
 	unsigned int to;															// Receiver
-	unsigned short port;														// Receiver port
-	unsigned short dataSize;													// value between 0 and 52
+	unsigned short portFrom;													// Sender port
+	unsigned short portTo;														// Receiver port
+	unsigned short id;															// Fragment id
+	unsigned char dataSize;														// 0-48
 	PacketHeader(){}
-	PacketHeader(unsigned int ip, unsigned short p){to = ip;port = p;}
-	PacketHeader(const char * ip, unsigned short p){
+	PacketHeader(unsigned int ip, unsigned short port):id(0){to = ip;portTo = port;}
+	PacketHeader(const char * ip, unsigned short port){
 		Translator translator;
 		to = translator.constCharIptoIntIp(ip);
-		port = p;
+		portTo = port;
 	}
 };
 
-const int MAXWIRESIZE = 64;
-const int MAXDATASIZE = MAXWIRESIZE - sizeof(PacketHeader);
+const int MAX_WIRE_SIZE = 64;
+const int MAX_DATA_SIZE = MAX_WIRE_SIZE - sizeof(PacketHeader);
 
 struct Packet{
 	PacketHeader header;
-	char data[MAXDATASIZE];								
+	char data[MAX_DATA_SIZE];
 };
 
 class Network{
