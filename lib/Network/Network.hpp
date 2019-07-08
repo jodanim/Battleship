@@ -22,8 +22,8 @@ struct PacketHeader{
 	unsigned int to;															// Receiver
 	unsigned short portFrom;													// Sender port
 	unsigned short portTo;														// Receiver port
+	unsigned short dataSize;														// 0-48
 	unsigned short id;															// Fragment id
-	unsigned char dataSize;														// 0-48
 	PacketHeader(){}
 	PacketHeader(unsigned int ip, unsigned short port):id(0){to = ip;portTo = port;}
 	PacketHeader(const char * ip, unsigned short port){
@@ -46,6 +46,7 @@ class Network{
 		Network(int Port, double reliability = 1);
 		~Network();
 
+			void sendMessage(PacketHeader header, const char * message);
 		void send(PacketHeader header, const char * data);
 		void* sendDone();
 		
@@ -66,6 +67,8 @@ class Network{
 		std::thread receiver;
 		Translator translator;
 		std::vector<Packet> receivedPackets;
+
+		std::vector<Packet> fragments;
 		
 		double reliability;
 		int packetsSent;

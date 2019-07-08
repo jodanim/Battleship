@@ -27,6 +27,28 @@ Network::~Network(){
 	receiver.join();
 }
 
+void Network::sendMessage(PacketHeader header, const char * message){
+	header.from = ip;
+	header.portFrom = port;
+	int length = strlen(message)+1;
+	int processedBytes = 0;
+	int i = 0;
+	while(processedBytes<length){
+		header.id = i++;
+		char buffer[MAX_DATA_SIZE];
+		if(MAX_DATA_SIZE<length-processedBytes){
+			strncpy(buffer,message+processedBytes,MAX_DATA_SIZE);
+			processedBytes += header.dataSize = MAX_DATA_SIZE;
+		}else{
+			strncpy(buffer,message+processedBytes,length-processedBytes);
+			processedBytes += header.dataSize = length-processedBytes;
+		}
+		send(header, buffer);
+		std::cout<<length<<":"<<processedBytes<<"\n";
+		sleep(1);
+	}
+}
+
 void Network::send(PacketHeader header, const char * data){
 	writeHandler();
 	std::thread(&Network::sendDone, this).detach();
@@ -95,8 +117,8 @@ Packet Network::byteArrayToPacket(const unsigned char * bytes){
 	packet.header.to = translator.byteArrayToNumber(bytes+4,4);
 	packet.header.portFrom = translator.byteArrayToNumber(bytes+8,2);
 	packet.header.portTo = translator.byteArrayToNumber(bytes+10,2);
-    packet.header.id = translator.byteArrayToNumber(bytes+12,2);
-	packet.header.dataSize = translator.byteArrayToNumber(bytes+14,1);
+    packet.header.dataSize = translator.byteArrayToNumber(bytes+12,2);
+	packet.header.id = translator.byteArrayToNumber(bytes+14,2);
 	strncpy(packet.data,(const char*)bytes+16,packet.header.dataSize);
     return packet;
 }
