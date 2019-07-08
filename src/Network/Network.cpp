@@ -32,7 +32,7 @@ void Network::send(PacketHeader header, const char * data){
 	std::thread(&Network::sendDone, this).detach();
 	int r;
 	if((r = rand()%100+1) > reliability*100){
-		std::cout<<r<<"failed"<<100*reliability<<"\n";
+		std::cout<<100*reliability<<":"<<r<<"failed"<<<<"\n";
 		return;
 	}
 	Packet packet;
@@ -66,7 +66,9 @@ void* Network::checkPacketAvailable(){
 		unsigned char buffer[MAX_WIRE_SIZE];
 		socket.Read(buffer,MAX_WIRE_SIZE);
 		Packet packet = byteArrayToPacket(buffer);
+		receiving.lock();
 		receivedPackets.push_back(packet);
+		receiving.unlock();
 		packetAvailable = true;
 	}
 	pthread_exit(EXIT_SUCCESS);
@@ -74,14 +76,16 @@ void* Network::checkPacketAvailable(){
 
 PacketHeader Network::receive(char * data){
 	readHandler();
+	receiving.lock();
 	Packet received = receivedPackets.front();
     receivedPackets.erase(receivedPackets.begin());
+	packetAvailable = !receivedPackets.empty();
+	receiving.unlock();
 	strncpy(data,received.data,received.header.dataSize);
 	return received.header;
 }
 
 void Network::readHandler(){
-	if(receivedPackets.size()==0)packetAvailable=false;
 	while(!packetAvailable);
 }
 
