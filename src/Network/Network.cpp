@@ -18,10 +18,12 @@ Network::Network(int port, double reliability){
 }
 
 Network::~Network(){
+	exit = true;
 	reliability = 1;
 	PacketHeader header(ip,port);
 	send(header,"end");
-	exit = true;
+	char buffer[4];
+	receive(buffer);
 	receiver.join();
 }
 
