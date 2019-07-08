@@ -34,17 +34,18 @@ void Network::send(PacketHeader header, const char * data){
 		return;
 	}
 	Packet packet;
-	int len = (MAXDATASIZE-1>strlen(data))? strlen(data): MAXDATASIZE-1;
+	int len = (MAX_DATA_SIZE-1>strlen(data))? strlen(data): MAX_DATA_SIZE-1;
 	strncpy(packet.data, data, len);
 	packet.data[len] = '\0';
 
 	header.from = ip;
+	header.portFrom = port;
 	header.dataSize = strlen(packet.data)+1;
 	packet.header = header;
 
-	unsigned char buffer[MAXWIRESIZE];
-	memcpy(buffer,(const unsigned char*)&packet,MAXWIRESIZE);
-	socket.Write(buffer,MAXWIRESIZE,header.to,header.port);
+	unsigned char buffer[MAX_WIRE_SIZE];
+	memcpy(buffer,(const unsigned char*)&packet,MAX_WIRE_SIZE);
+	socket.Write(buffer,MAX_WIRE_SIZE,header.to,header.portTo);
 }
 
 void Network::writeHandler(){
@@ -60,8 +61,8 @@ void* Network::sendDone(){
 
 void* Network::checkPacketAvailable(){
 	while(!exit){
-		unsigned char buffer[MAXWIRESIZE];
-		socket.Read(buffer,MAXWIRESIZE);
+		unsigned char buffer[MAX_WIRE_SIZE];
+		socket.Read(buffer,MAX_WIRE_SIZE);
 		Packet packet = byteArrayToPacket(buffer);
 		receivedPackets.push_back(packet);
 		packetAvailable = true;
@@ -84,11 +85,13 @@ void Network::readHandler(){
 
 Packet Network::byteArrayToPacket(const unsigned char * bytes){
     Packet packet;
-    packet.header.to = translator.byteArrayToNumber(bytes,4);
-    packet.header.from = translator.byteArrayToNumber(bytes+4,4);
-	packet.header.port = translator.byteArrayToNumber(bytes+8,2);
-    packet.header.dataSize = translator.byteArrayToNumber(bytes+10,2);
-	strncpy(packet.data,(const char*)bytes+12,packet.header.dataSize);
+    packet.header.from = translator.byteArrayToNumber(bytes,4);
+	packet.header.to = translator.byteArrayToNumber(bytes+4,4);
+	packet.header.portFrom = translator.byteArrayToNumber(bytes+8,2);
+	packet.header.portTo = translator.byteArrayToNumber(bytes+10,2);
+    packet.header.id = translator.byteArrayToNumber(bytes+12,2);
+	packet.header.dataSize = translator.byteArrayToNumber(bytes+14,1);
+	strncpy(packet.data,(const char*)bytes+16,packet.header.dataSize);
     return packet;
 }
 
