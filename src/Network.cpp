@@ -1,16 +1,14 @@
-#include "../../lib/Network/Network.hpp"
+#include "../lib/Network.hpp"
 #include <iostream>
 
 Network::Network(int port, double reliability){
 	srand(time(NULL));
 	this->reliability = (reliability<0)? 0 : (reliability>1)? 1 : reliability;
-    sendingPacket = false;
 	packetAvailable = false;
 	exit = false;
 	char buffer[IP_MAX_SIZE];
 	getLocalIp(buffer);
-	ip = translator.constCharIptoIntIp(buffer); 
-	
+	ip = translator.constCharIptoIntIp(buffer);
 	socket.Bind(port);
 	this->port = port;
 	receiver = std::thread(&Network::checkPacketAvailable, this);
@@ -23,6 +21,8 @@ Network::~Network(){
 	send(header,"");
 	receiver.join();
 }
+
+// ----------------------------------------------------------------------------------------------------------------------
 
 void Network::sendMessage(PacketHeader header, const char * message){
 	int messageLength = strlen(message);
@@ -54,6 +54,8 @@ PacketHeader Network::receiveMessage(char * message){
 	return header;
 }
 
+// ----------------------------------------------------------------------------------------------------------------------
+
 void Network::send(PacketHeader header, const char * data){
 	writeHandler();
 	std::thread(&Network::sendDone, this).detach();
@@ -77,12 +79,11 @@ void Network::send(PacketHeader header, const char * data){
 }
 
 void Network::writeHandler(){
-	while(sendingPacket);
-	sendingPacket = true;
+	sendingPacket.lock();
 }
 
 void* Network::sendDone(){
-	sendingPacket = false;
+	sendingPacket.unlock();
 	pthread_exit(NULL);
 }
 
@@ -114,6 +115,8 @@ void Network::readHandler(){
 	while(!packetAvailable);
 }
 
+// ----------------------------------------------------------------------------------------------------------------------
+
 Packet Network::byteArrayToPacket(const unsigned char * bytes){
     Packet packet;
     packet.header.messageSize = translator.byteArrayToNumber(bytes,4);
@@ -127,6 +130,8 @@ Packet Network::byteArrayToPacket(const unsigned char * bytes){
 	strncpy(packet.data,(const char*)bytes+sizeof(PacketHeader),packet.header.dataSize);
     return packet;
 }
+
+// ----------------------------------------------------------------------------------------------------------------------
 
 void Network::getLocalIp(char * ip, int family){
 	MessageHandler messageHandler;

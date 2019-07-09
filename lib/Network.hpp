@@ -17,15 +17,22 @@
 #define NETWORK_INTERFACE_MAX_LENGTH 15
 #define IP_MAX_SIZE 15
 
+struct ACK{
+	unsigned int ip;															
+	unsigned short port;														
+	unsigned short id;															// fragment id
+	ACK(unsigned int dir, unsigned short p, unsigned short n){ip = dir; port = p; id = n;}
+};
+
 struct PacketHeader{
 	unsigned int messageSize;													// Full Message Size
 	unsigned int from;															// Sender
 	unsigned int to;															// Receiver
 	unsigned short portFrom;													// Sender port
 	unsigned short portTo;														// Receiver port
-	unsigned short id;															// 0-65535
-	unsigned char dataSize;														// 0-44
-	unsigned char FrameNum;														// 0|1
+	unsigned short id;															// fragment id
+	unsigned char dataSize;														// 0 - MAX_DATA_SIZE
+	unsigned char FrameNum;														// 0|1 stop and wait
 	PacketHeader(){}
 	PacketHeader(unsigned int ip, unsigned short port){to = ip; portTo = port;}
 	PacketHeader(const char * ip, unsigned short port){
@@ -49,7 +56,11 @@ class Network{
 		~Network();
 		
 		void sendMessage(PacketHeader header, const char * message);	// Fragmentation
-		PacketHeader receiveMessage(char * message);							// Defragmentation
+		PacketHeader receiveMessage(char * message);					// Defragmentation
+
+		void sendACK(ACK ack);
+		ACK receiveACK();
+		void runClock();
 		
 	private:
 		// Machine ID
@@ -57,7 +68,7 @@ class Network{
 		unsigned short port;
 
 		// Control Flags
-		bool sendingPacket;
+		std::mutex sendingPacket;
 		bool packetAvailable;
 		bool exit;
 

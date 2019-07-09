@@ -1,5 +1,5 @@
-#include "../lib/Network/Time.hpp"
-#include "../lib/Network/Network.hpp"
+#include "../lib/Time.hpp"
+#include "../lib/Network.hpp"
 
 #include <sys/wait.h>
 

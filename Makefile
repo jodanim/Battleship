@@ -10,64 +10,64 @@ clean_obj:
 
 ################################################################################
 
-obj/Socket.obj: src/Network/Socket.cpp
+obj/Socket.obj: src/Socket.cpp
 	@echo "\033[1;35mGenerating \033[0;33m$@\033[0m"
 	@g++ -c $^ -o $@
 
-obj/debug/Socket.obj: src/Network/Socket.cpp
+obj/debug/Socket.obj: src/Socket.cpp
 	@echo "\033[1;36mGenerating \033[0;33m$@\033[0m"
 	@g++ -g -c $^ -o $@
 
 #-------------------------------------------------------------------------------
 
-obj/Time.obj: src/Network/Time.cpp
+obj/Time.obj: src/Time.cpp
 	@echo "\033[1;35mGenerating \033[0;33m$@\033[0m"
 	@g++ -c $^ -o $@
 
-obj/debug/Time.obj: src/Network/Time.cpp
+obj/debug/Time.obj: src/Time.cpp
 	@echo "\033[1;36mGenerating \033[0;33m$@\033[0m"
 	@g++ -g -c $^ -o $@
 
 #-------------------------------------------------------------------------------
 
-obj/MessageHandler.obj: src/Network/MessageHandler.cpp
+obj/MessageHandler.obj: src/MessageHandler.cpp
 	@echo "\033[1;35mGenerating \033[0;33m$@\033[0m"
 	@g++ -c $^ -o $@
 
-obj/debug/MessageHandler.obj: src/Network/MessageHandler.cpp
+obj/debug/MessageHandler.obj: src/MessageHandler.cpp
 	@echo "\033[1;36mGenerating \033[0;33m$@\033[0m"
 	@g++ -g -c $^ -o $@
 
 #-------------------------------------------------------------------------------
 
-obj/FileManager.obj: src/Network/FileManager.cpp
+obj/FileManager.obj: src/FileManager.cpp
 	@echo "\033[1;35mGenerating \033[0;33m$@\033[0m"
 	@g++ -c $^ -o $@
 
 
-obj/debug/FileManager.obj: src/Network/FileManager.cpp
+obj/debug/FileManager.obj: src/FileManager.cpp
 	@echo "\033[1;36mGenerating \033[0;33m$@\033[0m"
 	@g++ -g -c $^ -o $@
 
 #-------------------------------------------------------------------------------
 
-obj/Translator.obj: src/Network/Translator.cpp
+obj/Translator.obj: src/Translator.cpp
 	@echo "\033[1;35mGenerating \033[0;33m$@\033[0m"
 	@g++ -c $^ -o $@
 
 
-obj/debug/Translator.obj: src/Network/Translator.cpp
+obj/debug/Translator.obj: src/Translator.cpp
 	@echo "\033[1;36mGenerating \033[0;33m$@\033[0m"
 	@g++ -g -c $^ -o $@
 
 #-------------------------------------------------------------------------------
 
 
-obj/Network.obj: src/Network/Network.cpp
+obj/Network.obj: src/Network.cpp
 	@echo "\033[1;35mGenerating \033[0;33m$@\033[0m"
 	@g++ -c $^ -o $@
 
-obj/debug/Network.obj: src/Network/Network.cpp
+obj/debug/Network.obj: src/Network.cpp
 	@echo "\033[1;36mGenerating \033[0;33m$@\033[0m"
 	@g++ -g -c $^ -o $@
 	

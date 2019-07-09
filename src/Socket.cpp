@@ -1,4 +1,4 @@
-#include "../../lib/Network/Socket.hpp"
+#include "../lib/Socket.hpp"
 
 Socket::Socket(){
 	in_addr_t answerAddress = 0;

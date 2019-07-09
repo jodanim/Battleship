@@ -1,4 +1,4 @@
-#include "../../lib/Network/MessageHandler.hpp"
+#include "../lib/MessageHandler.hpp"
 
 void MessageHandler::msg(MessageId id, std::string dataA, std::string dataB, std::string dataC){
 	switch (id){
