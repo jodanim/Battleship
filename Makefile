@@ -2,6 +2,14 @@ all: compile compile_d finished
 
 ################################################################################
 
+clean_obj:
+	@echo "\033[1;31mDeleting all the objects\033[0m"
+	@rm -r obj/*
+	@mkdir obj/debug
+	@touch obj/debug/.gitkeep
+
+################################################################################
+
 obj/Socket.obj: src/Network/Socket.cpp
 	@echo "\033[1;35mGenerating \033[0;33m$@\033[0m"
 	@g++ -c $^ -o $@

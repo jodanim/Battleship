@@ -4,7 +4,6 @@
 Network::Network(int port, double reliability){
 	srand(time(NULL));
 	this->reliability = (reliability<0)? 0 : (reliability>1)? 1 : reliability;
-	packetsSent = 0;
     sendingPacket = false;
 	packetAvailable = false;
 	exit = false;
@@ -21,40 +20,35 @@ Network::~Network(){
 	exit = true;
 	reliability = 1;
 	PacketHeader header(ip,port);
-	send(header,"end");
-	char buffer[4];
-	receive(buffer);
+	send(header,"");
 	receiver.join();
 }
 
 void Network::sendMessage(PacketHeader header, const char * message){
-	header.from = ip;
-	header.portFrom = port;
-	int length = strlen(message)+1;
+	int messageLength = strlen(message);
+	header.messageSize = messageLength+1;
 	int processedBytes = 0;
 	int i = 0;
-	while(processedBytes<length){
+	while(processedBytes<messageLength){
+		int dataLength = ((MAX_DATA_SIZE - 1) < (messageLength-processedBytes))?MAX_DATA_SIZE-1:messageLength-processedBytes;
 		header.id = i++;
 		char buffer[MAX_DATA_SIZE];
-		if(MAX_DATA_SIZE<length-processedBytes){
-			strncpy(buffer,message+processedBytes,MAX_DATA_SIZE);
-			processedBytes += header.dataSize = MAX_DATA_SIZE;
-		}else{
-			strncpy(buffer,message+processedBytes,length-processedBytes);
-			processedBytes += header.dataSize = length-processedBytes;
-		}
+		strncpy(buffer,message+processedBytes,dataLength);
+		processedBytes += dataLength;
+		buffer[dataLength] = '\0';
 		send(header, buffer);
-		std::cout<<length<<":"<<processedBytes<<"\n";
-		sleep(1);
 	}
+}
+
+void Network::receiveMessage(char * message){
+
 }
 
 void Network::send(PacketHeader header, const char * data){
 	writeHandler();
 	std::thread(&Network::sendDone, this).detach();
-	int r;
-	if((r = rand()%100+1) > reliability*100){
-		std::cout<<100*reliability<<":"<<r<<"failed"<<"\n";
+	if((header.dataSize = rand()%100+1) > reliability*100){
+		std::cout<<header.dataSize<<">"<<reliability<<": FAILED "<<header.id<<"\n";
 		return;
 	}
 	Packet packet;
@@ -79,7 +73,6 @@ void Network::writeHandler(){
 
 void* Network::sendDone(){
 	sendingPacket = false;
-	packetsSent++;
 	pthread_exit(NULL);
 }
 
@@ -113,13 +106,15 @@ void Network::readHandler(){
 
 Packet Network::byteArrayToPacket(const unsigned char * bytes){
     Packet packet;
-    packet.header.from = translator.byteArrayToNumber(bytes,4);
-	packet.header.to = translator.byteArrayToNumber(bytes+4,4);
-	packet.header.portFrom = translator.byteArrayToNumber(bytes+8,2);
-	packet.header.portTo = translator.byteArrayToNumber(bytes+10,2);
-    packet.header.dataSize = translator.byteArrayToNumber(bytes+12,2);
-	packet.header.id = translator.byteArrayToNumber(bytes+14,2);
-	strncpy(packet.data,(const char*)bytes+16,packet.header.dataSize);
+    packet.header.messageSize = translator.byteArrayToNumber(bytes,4);
+	packet.header.from = translator.byteArrayToNumber(bytes+4,4);
+	packet.header.to = translator.byteArrayToNumber(bytes+8,4);
+	packet.header.portFrom = translator.byteArrayToNumber(bytes+12,2);
+	packet.header.portTo = translator.byteArrayToNumber(bytes+14,2);
+	packet.header.id = translator.byteArrayToNumber(bytes+16,2);
+	packet.header.dataSize = translator.byteArrayToNumber(bytes+18,1);
+	packet.header.FrameNum = translator.byteArrayToNumber(bytes+19,1);
+	strncpy(packet.data,(const char*)bytes+sizeof(PacketHeader),packet.header.dataSize);
     return packet;
 }
 
