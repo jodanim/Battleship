@@ -26,7 +26,7 @@ Network::~Network(){
 
 void Network::sendMessage(PacketHeader header, const char * message){
 	int messageLength = strlen(message);
-	header.messageSize = messageLength+1;
+	header.messageSize = messageLength;
 	int processedBytes = 0;
 	int i = 0;
 	while(processedBytes<messageLength){
@@ -40,8 +40,18 @@ void Network::sendMessage(PacketHeader header, const char * message){
 	}
 }
 
-void Network::receiveMessage(char * message){
-
+PacketHeader Network::receiveMessage(char * message){
+	PacketHeader header = receive(message);
+	int processedBytes = header.dataSize;
+	int messageSize = header.messageSize;
+	while(messageSize>processedBytes){
+		char buffer[MAX_DATA_SIZE];
+		header = receive(buffer);
+		strncpy(message+processedBytes,buffer,header.dataSize);
+		processedBytes += header.dataSize;
+	}
+	message[messageSize] = '\0';
+	return header;
 }
 
 void Network::send(PacketHeader header, const char * data){
@@ -58,7 +68,7 @@ void Network::send(PacketHeader header, const char * data){
 
 	header.from = ip;
 	header.portFrom = port;
-	header.dataSize = strlen(packet.data)+1;
+	header.dataSize = strlen(packet.data);
 	packet.header = header;
 
 	unsigned char buffer[MAX_WIRE_SIZE];

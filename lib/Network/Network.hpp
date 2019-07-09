@@ -49,14 +49,8 @@ class Network{
 		~Network();
 		
 		void sendMessage(PacketHeader header, const char * message);	// Fragmentation
-		void receiveMessage(char * message);							// Defragmentation
+		PacketHeader receiveMessage(char * message);							// Defragmentation
 		
-		void send(PacketHeader header, const char * data);				// Packet send
-		void* sendDone();												// FlagChanger
-
-		void* checkPacketAvailable();									// Packet receive
-		PacketHeader receive(char * data);								// Packet pickup
-
 	private:
 		// Machine ID
 		unsigned int ip;
@@ -77,7 +71,11 @@ class Network{
 		
 		double reliability;
 		
+		void send(PacketHeader header, const char * data);				// Packet send
+		void* sendDone();												// FlagChanger
 
+		void* checkPacketAvailable();									// Packet receive
+		PacketHeader receive(char * data);								// Packet pickup
 
 		void readHandler();												// one packet lecture at time
 		void writeHandler();											// one packet write at time
