@@ -8,3 +8,5 @@ src/OTHERS/
 bin/
 
 prueba/obj/
+
+ws\.code-workspace

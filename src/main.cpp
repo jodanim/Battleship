@@ -4,11 +4,11 @@
 #include <sys/wait.h>
 
 int main(int argc, char**argv){
-    Network n(1101);
+    Network n(1101,1);
     for(int i = 0; ;i++){
         char buffer[MAX_DATA_SIZE];
         PacketHeader rec = n.receive(buffer);
-        std::cout<<i<<":"<<buffer<<std::endl;
+        std::cout<<rec.id<<":"<<buffer<<std::endl;
         PacketHeader header(rec.from,rec.portFrom);
         n.send(header,"hello from server.");
     }
