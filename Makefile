@@ -62,7 +62,6 @@ obj/debug/Translator.obj: src/Translator.cpp
 
 #-------------------------------------------------------------------------------
 
-
 obj/Network.obj: src/Network.cpp
 	@echo "\033[1;35mGenerating \033[0;33m$@\033[0m"
 	@g++ -c $^ -o $@
@@ -72,6 +71,17 @@ obj/debug/Network.obj: src/Network.cpp
 	@g++ -g -c $^ -o $@
 	
 #-------------------------------------------------------------------------------
+
+obj/Battleship.obj: src/Battleship.cpp
+	@echo "\033[1;35mGenerating \033[0;33m$@\033[0m"
+	@g++ -c $^ -o $@
+
+obj/debug/Battleship.obj: src/Battleship.cpp
+	@echo "\033[1;36mGenerating \033[0;33m$@\033[0m"
+	@g++ -g -c $^ -o $@
+	
+#-------------------------------------------------------------------------------
+
 
 obj/main.obj: src/main.cpp
 	@echo "\033[1;35mGenerating \033[0;33m$@\033[0m"
@@ -87,20 +97,19 @@ obj/debug/main.obj: src/main.cpp
 
 ################################################################################
 
-bin/main: obj/Socket.obj obj/MessageHandler.obj obj/FileManager.obj obj/Time.obj obj/Translator.obj obj/Network.obj obj/main.obj 
+bin/main: obj/Socket.obj obj/MessageHandler.obj obj/FileManager.obj obj/Time.obj obj/Translator.obj obj/Network.obj obj/Battleship.obj obj/main.obj 
 	@echo "\033[1;35mGenerating \033[0;33m$@\033[0m"
 	@g++ -pthread $^ -o $@
 
-bin/client: obj/Socket.obj obj/MessageHandler.obj obj/FileManager.obj obj/Time.obj obj/Translator.obj obj/Network.obj obj/client.obj
+bin/client: obj/Socket.obj obj/MessageHandler.obj obj/FileManager.obj obj/Time.obj obj/Translator.obj obj/Network.obj obj/Battleship.obj obj/client.obj
 	@echo "\033[1;35mGenerating \033[0;33m$@\033[0m"
 	@g++ -pthread $^ -o $@
 
-bin/debug/main: obj/debug/Socket.obj obj/debug/MessageHandler.obj obj/debug/FileManager.obj obj/debug/Time.obj obj/debug/Translator.obj obj/debug/Network.obj obj/debug/main.obj 
+bin/debug/main: obj/debug/Socket.obj obj/debug/MessageHandler.obj obj/debug/FileManager.obj obj/debug/Time.obj obj/debug/Translator.obj obj/debug/Network.obj obj/debug/Battleship.obj obj/debug/main.obj 
 	@echo "\033[1;36mGenerating \033[0;33m$@\033[0m"
 	@g++ -pthread -g $^ -o $@
 
 ################################################################################
-
 
 compile:compileMessage bin/main 
 
