@@ -10,18 +10,22 @@
 #include <ifaddrs.h>
 
 #include <vector>
+#include <map>
 #include <thread>
 #include <mutex>
 
 #define PROC_NET_ROUTE_LINE_SIZE 128
 #define NETWORK_INTERFACE_MAX_LENGTH 15
 #define IP_MAX_SIZE 15
+#define CONECTION_RETRIES 10
+
+#define forever for(int iteration=0;;iteration++)
 
 struct ACK{
 	unsigned int ip;															
 	unsigned short port;														
-	unsigned short id;															// fragment id
-	ACK(unsigned int dir, unsigned short p, unsigned short n){ip = dir; port = p; id = n;}
+	unsigned char frameNum;															// fragment id
+	ACK(unsigned int dir, unsigned short p, unsigned short n){ip = dir; port = p; frameNum = n;}
 };
 
 struct PacketHeader{
@@ -32,10 +36,10 @@ struct PacketHeader{
 	unsigned short portTo;														// Receiver port
 	unsigned short id;															// fragment id
 	unsigned char dataSize;														// 0 - MAX_DATA_SIZE
-	unsigned char FrameNum;														// 0|1 stop and wait
-	PacketHeader(){}
-	PacketHeader(unsigned int ip, unsigned short port){to = ip; portTo = port;}
-	PacketHeader(const char * ip, unsigned short port){
+	char frameNum;																// 0|1 stop and wait
+	PacketHeader():frameNum(-1){}
+	PacketHeader(unsigned int ip, unsigned short port):frameNum(-1){to = ip; portTo = port;}
+	PacketHeader(const char * ip, unsigned short port):frameNum(-1){
 		Translator translator;
 		to = translator.constCharIptoIntIp(ip);
 		portTo = port;
@@ -52,15 +56,28 @@ struct Packet{
 
 class Network{
 	public:
-		Network(int Port, double reliability = 1);
+		// Constructor.
+		Network(int Port, double reliability);
+		// Destructor.
 		~Network();
 		
-		void sendMessage(PacketHeader header, const char * message);	// Fragmentation
-		PacketHeader receiveMessage(char * message);					// Defragmentation
+		// Packet Fragmentation.
+		void sendMessage(PacketHeader header, const char * message);
+		// Defragmentation.
+		PacketHeader receiveMessage(char * message);
 
-		void sendACK(ACK ack);
-		ACK receiveACK();
-		void runClock();
+		void sendACK(PacketHeader header);
+
+		void receiveACK(PacketHeader header, bool &timeout, bool &acknowledged);
+		
+		// Manages timeout
+		void runClock(bool &timeout, bool &acknowledged);
+
+		void send(PacketHeader header, const char * data);				// Packet send
+		
+		void sendDone();												
+		void checkPacketAvailable();									// Packet receive
+		PacketHeader receive(char * data, PacketHeader header);								// Packet pickup
 		
 	private:
 		// Machine ID
@@ -68,27 +85,31 @@ class Network{
 		unsigned short port;
 
 		// Control Flags
-		std::mutex sendingPacket;
-		bool packetAvailable;
+
+		bool firstPacketAvailable;
 		bool exit;
+		int connectionLost;
 
 		Socket socket;
+		std::mutex sendingPacket;
+		std::mutex acknowledge;
 		std::mutex receiving;
+		
 		std::thread receiver;
 		Translator translator;
-		std::vector<Packet> receivedPackets;
+		std::vector<Packet> firstPacket;
+		std::map<unsigned int,std::map<unsigned short,std::vector<Packet>>> receivedPackets;
+		std::map<unsigned int,std::map<unsigned short,bool>> incommingMessage;
+		std::map<unsigned int,std::map<unsigned short,char>> receivedACK;
+		std::map<unsigned int,std::map<unsigned short,char>> lastSendedACK;
 
 		std::vector<Packet> fragments;
 		
 		double reliability;
 		
-		void send(PacketHeader header, const char * data);				// Packet send
-		void* sendDone();												// FlagChanger
 
-		void* checkPacketAvailable();									// Packet receive
-		PacketHeader receive(char * data);								// Packet pickup
 
-		void readHandler();												// one packet lecture at time
+		void readHandler(PacketHeader header);												// one packet lecture at time
 		void writeHandler();											// one packet write at time
 		Packet byteArrayToPacket(const unsigned char * bytes);			// gets an array of bytes and transforms it into a packet
 		void getLocalIp(char * ip, int family = AF_INET);				// gets this machine local ip
