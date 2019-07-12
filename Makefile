@@ -83,11 +83,11 @@ run_player2: compile runMessage
 	@make finished --no-print-directory
 	
 run_receiver: compile runMessage
-	@./bin/Receiver 0.0.0.0 1102 1101
+	@./bin/Receiver 0.0.0.0 1104 1103
 	@make finished --no-print-directory
 	
 run_sender: compile runMessage
-	@./bin/Sender 0.0.0.0 1101 1102 0.01 "Este mensaje es lo suficientemente largo para ser fragmentado por el programa que lo envía y ser desfragmentado por el programa que lo recibe." 10
+	@./bin/Sender 0.0.0.0 1103 1104 0.01 "Este mensaje es lo suficientemente largo para ser fragmentado por el programa que lo envía y ser desfragmentado por el programa que lo recibe." 10
 	@make finished --no-print-directory
 		
 ################################################################################
