@@ -23,7 +23,7 @@ class Battleship{
 		 * 		enemyPort: The enemy port number.
 		 * 		ownPort: your port number to be bind.
 		 */
-		Battleship(const char * enemyIp, unsigned short enemyPort, unsigned short ownPort);
+		Battleship(const char * enemyIp, unsigned short enemyPort, unsigned short ownPort, int orientation);
 		
 		/**
 		 * Destructor
@@ -39,7 +39,7 @@ class Battleship{
 		 * REQ: coordinate: Any const char array.
 		 * RET: The int converted coordinate.
 		 */ 
-		int getCoordinate(const char * coordinate);
+		int getCoordinate(std::string coordinate);
 		
 		/**
 		 * getInput 
@@ -93,7 +93,7 @@ class Battleship{
 		 * 
 		 * EFE: Prints both grids starting at the position 0,0 of the terminal.
 		 */
-		void printGrid();
+		void printGrid(int orientation);
 		
 	private:
 

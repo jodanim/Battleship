@@ -1,37 +1,34 @@
 #include "../lib/Battleship.hpp"
 
-Battleship::Battleship(const char * enemyIp, unsigned short enemyPort, unsigned short ownPort){
+Battleship::Battleship(const char * enemyIp, unsigned short enemyPort, unsigned short ownPort, int orientation){
     srand(time(NULL));
     network = new Network(ownPort,1);
     setGrid();
     header = new PacketHeader(enemyIp,enemyPort);
+    
     std::cout<<"Waiting for connection.\n";
     
-    char buffer[8];
-    int random;
-    do{
-        random = rand()%100;
-        network->sendMessage(*header,std::to_string(random).c_str());
-        network->receiveMessage(buffer);
-        yourTurn = random > atoi(buffer);
-    }while(random == atoi(buffer));
-
-    std::cout<<"first random turn: "<<"You: "<< random <<" The enemy: "<<buffer<<"\n";
-    sleep(5);
+    int yourRandom;
+    int enemyRandom;
+    
+    yourTurn = enemyPort>ownPort;
+    
+    std::cout<<"first random turn: "<<"You: "<< yourRandom <<" The enemy: "<<enemyRandom<<"\n";
+    sleep(3);
+    int pos = 0;
     while(!gameover){
-        printGrid();
+        printGrid(orientation);
         if(yourTurn){
             std::cout<<"\033[KYour turn, select a coordinate to attack:\n\033[K";
-            int pos = getInput();
+            pos = getInput();
             attack(pos);
         }else{
             std::cout<<"\033[KWaiting for enemy move.\n\033[K";
-            network->receiveMessage(buffer);
-            int pos = getCoordinate(buffer);
+            pos = atoi(network->receiveMessage(*header).c_str());
             updateGrid(pos);
         }
     }
-    printGrid();
+    printGrid(orientation);
     if(winner){
         std::cout<<"\033[K\033[1;32mCongratulations you are the winner\n\033[K";
     }else{
@@ -44,16 +41,16 @@ Battleship::~Battleship(){
     delete header;
 }
 
-int Battleship::getCoordinate(const char * coordinate){
+int Battleship::getCoordinate(std::string coordinate){
     int x,y;
-    if(strlen(coordinate)>2){
+    if(coordinate.size()>2){
         return -1;
     }  
-    x = coordinate[1]-'1';
-    if(coordinate[0]<'a'){
-        y = coordinate[0] - 'A';
+    x = coordinate.at(1)-'1';
+    if(coordinate.at(0)<'a'){
+        y = coordinate.at(0) - 'A';
     }else{
-        y = coordinate[0] - 'a';
+        y = coordinate.at(0) - 'a';
     }
     return y*10+x+1;
 }
@@ -63,7 +60,7 @@ int Battleship::getInput(){
     int coordinate;
     do{
         getline(std::cin,input);
-        coordinate = getCoordinate(input.c_str());
+        coordinate = getCoordinate(input);
         if(coordinate == -1 || coordinate >= 100){
             std::cout<<"\033[1;31mWrong input\n";
         }
@@ -75,9 +72,7 @@ int Battleship::getInput(){
 
 void Battleship::attack(int pos){
     network->sendMessage(*header,std::to_string(pos).c_str());
-    char buffer[8];
-    network->receiveMessage(buffer);
-    int state = atoi(buffer);
+    int state = atoi(network->receiveMessage(*header).c_str());
 
     if(state == filled){
         enemyGrid.at(pos) = destroyed;
@@ -175,36 +170,61 @@ void Battleship::printCell(CellState state){
     }
 }
 
-void Battleship::printGrid(){
-    std::cout<<"\033[0;0f";
-    std::cout<<"\033[K\033[32m                Your Board                \033[0m\n";
-    std::cout<<"\033[K\033[1;32m   0   1   2   3   4   5   6   7   8   9  \033[0m\n";
-    std::cout<<"\033[K\033[1;34m ╔═══╦═══╦═══╦═══╦═══╦═══╦═══╦═══╦═══╦═══╗\033[0m\n";
-    for(int i = 0; i < 10; i++){
-        std::cout<<"\033[K\033[1;32m"<<(char)('A'+i)<<"\033[0m";
-        for(int j = 0; j <10; j++){
-            std::cout<<"\033[1;34m║\033[0m";
-            printCell(grid[i*10+j]);
+void Battleship::printGrid(int orientation){
+    if(orientation == horizontal){
+        std::cout<<"\033[0;0f";
+        std::cout<<"\033[K\033[32m                Your Board                                     Enemy Board               \033[0m\n";
+        std::cout<<"\033[K\033[1;32m   0   1   2   3   4   5   6   7   8   9        0   1   2   3   4   5   6   7   8   9  \033[0m\n";
+        std::cout<<"\033[K\033[1;34m ╔═══╦═══╦═══╦═══╦═══╦═══╦═══╦═══╦═══╦═══╗    ╔═══╦═══╦═══╦═══╦═══╦═══╦═══╦═══╦═══╦═══╗\033[0m\n";
+        for(int i = 0; i < 10; i++){
+            std::cout<<"\033[K\033[1;32m"<<(char)('A'+i)<<"\033[0m";
+            for(int j = 0; j <10; j++){
+                std::cout<<"\033[1;34m║\033[0m";
+                printCell(grid[i*10+j]);
+            }
+            std::cout<<"\033[1;34m║   \033[0m";
+            std::cout<<"\033[K\033[1;32m"<<(char)('A'+i)<<"\033[0m";
+            for(int j = 0; j <10; j++){
+                std::cout<<"\033[1;34m║\033[0m";
+                printCell(enemyGrid[i*10+j]);
+            }
+            std::cout<<"\033[1;34m║\033[0m\n";
+            if(i<9){
+                std::cout<<"\033[K\033[1;34m ╠═══╬═══╬═══╬═══╬═══╬═══╬═══╬═══╬═══╬═══╣    ╠═══╬═══╬═══╬═══╬═══╬═══╬═══╬═══╬═══╬═══╣\033[0m\n";
+            }
         }
-        std::cout<<"\033[1;34m║\033[0m\n";
-        if(i<9){
-            std::cout<<"\033[K\033[1;34m ╠═══╬═══╬═══╬═══╬═══╬═══╬═══╬═══╬═══╬═══╣\033[0m\n";
+        std::cout<<"\033[K\033[1;34m ╚═══╩═══╩═══╩═══╩═══╩═══╩═══╩═══╩═══╩═══╝    ╚═══╩═══╩═══╩═══╩═══╩═══╩═══╩═══╩═══╩═══╝\033[0m\n";
+    }else{
+        std::cout<<"\033[0;0f";
+        std::cout<<"\033[K\033[32m                Your Board                \033[0m\n";
+        std::cout<<"\033[K\033[1;32m   0   1   2   3   4   5   6   7   8   9  \033[0m\n";
+        std::cout<<"\033[K\033[1;34m ╔═══╦═══╦═══╦═══╦═══╦═══╦═══╦═══╦═══╦═══╗\033[0m\n";
+        for(int i = 0; i < 10; i++){
+            std::cout<<"\033[K\033[1;32m"<<(char)('A'+i)<<"\033[0m";
+            for(int j = 0; j <10; j++){
+                std::cout<<"\033[1;34m║\033[0m";
+                printCell(grid[i*10+j]);
+            }
+            std::cout<<"\033[1;34m║\033[0m\n";
+            if(i<9){
+                std::cout<<"\033[K\033[1;34m ╠═══╬═══╬═══╬═══╬═══╬═══╬═══╬═══╬═══╬═══╣\033[0m\n";
+            }
         }
+        std::cout<<"\033[K\033[1;34m ╚═══╩═══╩═══╩═══╩═══╩═══╩═══╩═══╩═══╩═══╝\033[0m\n\n";
+        std::cout<<"\033[K\033[31m               Enemy Board                \033[0m\n";
+        std::cout<<"\033[K\033[1;32m   0   1   2   3   4   5   6   7   8   9  \033[0m\n";
+        std::cout<<"\033[K\033[1;34m ╔═══╦═══╦═══╦═══╦═══╦═══╦═══╦═══╦═══╦═══╗\033[0m\n";
+        for(int i = 0; i < 10; i++){
+            std::cout<<"\033[K\033[1;32m"<<(char)('A'+i)<<"\033[0m";
+            for(int j = 0; j <10; j++){
+                std::cout<<"\033[1;34m║\033[0m";
+                printCell(enemyGrid[i*10+j]);
+            }
+            std::cout<<"\033[1;34m║\033[0m\n";
+            if(i<9){
+                std::cout<<"\033[K\033[1;34m ╠═══╬═══╬═══╬═══╬═══╬═══╬═══╬═══╬═══╬═══╣\033[0m\n";
+            }
+        }
+        std::cout<<"\033[K\033[1;34m ╚═══╩═══╩═══╩═══╩═══╩═══╩═══╩═══╩═══╩═══╝\033[0m\n";
     }
-    std::cout<<"\033[K\033[1;34m ╚═══╩═══╩═══╩═══╩═══╩═══╩═══╩═══╩═══╩═══╝\033[0m\n\n";
-    std::cout<<"\033[K\033[31m               Enemy Board                \033[0m\n";
-    std::cout<<"\033[K\033[1;32m   0   1   2   3   4   5   6   7   8   9  \033[0m\n";
-    std::cout<<"\033[K\033[1;34m ╔═══╦═══╦═══╦═══╦═══╦═══╦═══╦═══╦═══╦═══╗\033[0m\n";
-    for(int i = 0; i < 10; i++){
-        std::cout<<"\033[K\033[1;32m"<<(char)('A'+i)<<"\033[0m";
-        for(int j = 0; j <10; j++){
-            std::cout<<"\033[1;34m║\033[0m";
-            printCell(enemyGrid[i*10+j]);
-        }
-        std::cout<<"\033[1;34m║\033[0m\n";
-        if(i<9){
-            std::cout<<"\033[K\033[1;34m ╠═══╬═══╬═══╬═══╬═══╬═══╬═══╬═══╬═══╬═══╣\033[0m\n";
-        }
-    }
-    std::cout<<"\033[K\033[1;34m ╚═══╩═══╩═══╩═══╩═══╩═══╩═══╩═══╩═══╩═══╝\033[0m\n";
 }

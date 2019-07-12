@@ -59,11 +59,11 @@ bin/Player: obj/Socket.obj obj/MessageHandler.obj obj/FileManager.obj obj/Transl
 compile:compileMessage bin/Player
 
 run_player1: compile runMessage
-	@./bin/Player 0.0.0.0 1101 1102
+	@./bin/Player 0.0.0.0 1101 1102 0
 	@make finished --no-print-directory
 
 run_player2: compile runMessage
-	@./bin/Player 0.0.0.0 1102 1101
+	@./bin/Player 0.0.0.0 1102 1101 1
 	@make finished --no-print-directory
 	
 ################################################################################
