@@ -6,21 +6,14 @@
 #include <string>
 #include <netdb.h>
 
-enum MessageId{
-	noIPCMessages,
-	StartProgram,StartTime,EndTime,FinishProgram
-};
+
 enum ErrorId{
-	msggetErr,msgctlErr,msgsndErr,msgrcvErr,
 	WrongIp,NoIfaddrs,NoNameinfo
 };
-
+// No es importante
 class MessageHandler{
 	public:		
-		void msg(MessageId id, std::string dataA = "", std::string dataB = "", std::string dataC = "");
-		void msg(MessageId id, double dataA, double dataB, std::string dataC = "");
-		void msg(MessageId id, double dataA, std::string dataB);
-		void error(ErrorId id, std::string dataA = "");        	
+		void error(ErrorId id, std::string dataA = "");
 		void debug(std::string data, bool lf = true);
 		void debug(int data, bool lf = true);
 		void debug(char * data, bool lf = true);

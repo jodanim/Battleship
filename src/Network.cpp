@@ -4,11 +4,9 @@
 Network::Network(int port, double reliability){
 	srand(time(NULL));
 	this->reliability = (reliability<0)? 0 : (reliability>1)? 1 : reliability;
-	packetAvailable = false;
 	exit = false;
-	char buffer[IP_MAX_SIZE];
-	getLocalIp(buffer);
-	ip = translator.constCharIptoIntIp(buffer);
+	std::string localIp = getLocalIp();	
+	ip = translator.constCharIptoIntIp(localIp.c_str());
 	socket.Bind(port);
 	this->port = port;
 	receiver = std::thread(&Network::checkPacketAvailable, this);
@@ -17,104 +15,173 @@ Network::Network(int port, double reliability){
 Network::~Network(){
 	exit = true;
 	reliability = 1;
-	PacketHeader header(ip,port);
-	send(header,"");
+	socket.Write((const unsigned char*)"end",3,ip,port);
 	receiver.join();
 }
 
 // ----------------------------------------------------------------------------------------------------------------------
 
 void Network::sendMessage(PacketHeader header, const char * message){
-	int messageLength = strlen(message);
-	header.messageSize = messageLength;
+	if(header.to == 0)header.to = ip;
+	failcounter = 0;
+	connectionLost = 0;
+	header.messageSize = strlen(message);
 	int processedBytes = 0;
 	int i = 0;
-	while(processedBytes<messageLength){
-		int dataLength = ((MAX_DATA_SIZE - 1) < (messageLength-processedBytes))?MAX_DATA_SIZE-1:messageLength-processedBytes;
-		header.id = i++;
+	while(processedBytes<header.messageSize && connectionLost<CONECTION_RETRIES){
+		int dataLength = ((MAX_DATA_SIZE - 1) < (header.messageSize-processedBytes))?MAX_DATA_SIZE-1:header.messageSize-processedBytes;
+		header.frameNum = i++%2;
 		char buffer[MAX_DATA_SIZE];
 		strncpy(buffer,message+processedBytes,dataLength);
 		processedBytes += dataLength;
 		buffer[dataLength] = '\0';
 		send(header, buffer);
 	}
-}
-
-PacketHeader Network::receiveMessage(char * message){
-	PacketHeader header = receive(message);
-	int processedBytes = header.dataSize;
-	int messageSize = header.messageSize;
-	while(messageSize>processedBytes){
-		char buffer[MAX_DATA_SIZE];
-		header = receive(buffer);
-		strncpy(message+processedBytes,buffer,header.dataSize);
-		processedBytes += header.dataSize;
+	if(connectionLost==CONECTION_RETRIES){
+		std::string receiverIp = translator.intIptoStringIp(header.to);
+		std::cout<<"\033[31mConnection with \033[33m"<<receiverIp<<":"<<header.portTo<<"\033[31m Lost.\033[0m\n";	
 	}
-	message[messageSize] = '\0';
-	return header;
 }
-
-// ----------------------------------------------------------------------------------------------------------------------
 
 void Network::send(PacketHeader header, const char * data){
 	writeHandler();
 	std::thread(&Network::sendDone, this).detach();
-	if((header.dataSize = rand()%100+1) > reliability*100){
-		std::cout<<header.dataSize<<">"<<reliability<<": FAILED "<<header.id<<"\n";
-		return;
-	}
-	Packet packet;
-	int len = (MAX_DATA_SIZE-1>strlen(data))? strlen(data): MAX_DATA_SIZE-1;
-	strncpy(packet.data, data, len);
-	packet.data[len] = '\0';
 
+	Packet * packet = new Packet;
+	int len = (MAX_DATA_SIZE-1>strlen(data))? strlen(data): MAX_DATA_SIZE-1;
+	strncpy(packet->data, data, len);
+	packet->data[len] = '\0';
 	header.from = ip;
 	header.portFrom = port;
-	header.dataSize = strlen(packet.data);
-	packet.header = header;
+	header.dataSize = len;
+	packet->header = header;
 
 	unsigned char buffer[MAX_WIRE_SIZE];
-	memcpy(buffer,(const unsigned char*)&packet,MAX_WIRE_SIZE);
-	socket.Write(buffer,MAX_WIRE_SIZE,header.to,header.portTo);
+	memcpy(buffer,(const unsigned char*)packet,MAX_WIRE_SIZE);
+
+	bool acknowledged = false;
+	while(!acknowledged&&connectionLost<CONECTION_RETRIES){
+		bool timeout = false;
+		acknowledged = false;
+		if((rand()%100+1) > reliability*100){
+			std::cout<<"\033[1A\033[31mSENDING FAILED "<< failcounter++<<" TIMES.\033[0m\n";
+			timeout = true;
+		}else{
+			socket.Write(buffer,MAX_WIRE_SIZE,header.to,header.portTo);
+		}
+		if(!timeout){
+			std::thread timeThread(&Network::runClock,this, std::ref(timeout),std::ref(acknowledged));
+			receiveACK(header,timeout,acknowledged);
+			timeThread.join();
+		}
+	}
+	delete packet;
 }
 
 void Network::writeHandler(){
 	sendingPacket.lock();
 }
 
-void* Network::sendDone(){
+void Network::runClock(bool &timeout, bool &acknowledged){
+	for(int i = 0; i < 2500; i++){
+		usleep(1);
+		if(acknowledged)pthread_exit(NULL);
+	}
+	
+	acknowledging.lock();
+	if(!acknowledged){
+		timeout = true;
+		connectionLost++;
+		std::cout<<connectionLost<<": Timeout\n";
+	}
+	acknowledging.unlock();
+	pthread_exit(NULL);
+}
+
+void Network::receiveACK(PacketHeader header, bool &timeout, bool &acknowledged){
+	while(receivedPackets[header.to][header.portTo].empty() && !timeout);
+	acknowledging.lock();
+	if(!timeout){
+		for (std::vector<Packet>::iterator it = receivedPackets[header.to][header.portTo].begin() ; it != receivedPackets[header.to][header.portTo].end(); ++it){
+    		if(strncmp(it->data,"ACK",MAX_DATA_SIZE)==0){
+				if(it->header.frameNum == header.frameNum){
+					acknowledged = true;
+				}
+				receivedPackets[header.to][header.portTo].erase(it);
+				break;
+			}
+		}
+	}
+	acknowledging.unlock();
+}
+
+void Network::sendDone(){
 	sendingPacket.unlock();
 	pthread_exit(NULL);
 }
 
-void* Network::checkPacketAvailable(){
+// ----------------------------------------------------------------------------------------------------------------------
+
+std::string Network::receiveMessage(PacketHeader header){
+	PacketHeader fliped(header.to,header.portTo, true);
+	if(fliped.from == 0)fliped.from = ip;
+	std::string message = "";
+	do{
+		message += receive(fliped);
+	}while(fliped.messageSize>message.size());
+	return message;
+}
+
+std::string Network::receive(PacketHeader &header){
+	readHandler(header);
+	receiving.lock();
+	Packet received;
+	for (std::vector<Packet>::iterator it = receivedPackets[header.from][header.portFrom].begin() ; it != receivedPackets[header.from][header.portFrom].end(); ++it){
+		if(strncmp(it->data,"ACK",MAX_DATA_SIZE)!=0){
+			received = receivedPackets[header.from][header.portFrom].front();
+			receivedPackets[header.from][header.portFrom].erase(it);
+			break;
+		}
+	}
+	receiving.unlock();
+	header = received.header;
+	return std::string(received.data,received.header.dataSize);
+}
+
+void Network::readHandler(PacketHeader header){
+	while(receivedPackets[header.from][header.portFrom].empty());
+}
+
+// ----------------------------------------------------------------------------------------------------------------------
+
+void Network::checkPacketAvailable(){
 	while(!exit){
 		unsigned char buffer[MAX_WIRE_SIZE];
 		socket.Read(buffer,MAX_WIRE_SIZE);
 		Packet packet = byteArrayToPacket(buffer);
 		receiving.lock();
-		receivedPackets.push_back(packet);
+		if(strncmp(packet.data,"ACK",MAX_DATA_SIZE) != 0){
+			sendACK(packet.header);
+		}
+		receivedPackets[packet.header.from][packet.header.portFrom].push_back(packet);		
 		receiving.unlock();
-		packetAvailable = true;
 	}
 	pthread_exit(EXIT_SUCCESS);
 }
 
-PacketHeader Network::receive(char * data){
-	readHandler();
-	receiving.lock();
-	Packet received = receivedPackets.front();
-    receivedPackets.erase(receivedPackets.begin());
-	packetAvailable = !receivedPackets.empty();
-	receiving.unlock();
-	strncpy(data,received.data,received.header.dataSize);
-	return received.header;
+void Network::sendACK(PacketHeader header){
+	PacketHeader ack(header.from,header.portFrom);
+	Packet packet;
+	strncpy(packet.data, "ACK", 3);
+	ack.from = ip;
+	ack.portFrom = port;
+	ack.dataSize = 3;
+	ack.frameNum = header.frameNum;
+	packet.header = ack;
+	unsigned char buffer[MAX_WIRE_SIZE];
+	memcpy(buffer,(const unsigned char*)&packet,MAX_WIRE_SIZE);
+	socket.Write(buffer,MAX_WIRE_SIZE,packet.header.to,packet.header.portTo);
 }
-
-void Network::readHandler(){
-	while(!packetAvailable);
-}
-
 // ----------------------------------------------------------------------------------------------------------------------
 
 Packet Network::byteArrayToPacket(const unsigned char * bytes){
@@ -124,20 +191,18 @@ Packet Network::byteArrayToPacket(const unsigned char * bytes){
 	packet.header.to = translator.byteArrayToNumber(bytes+8,4);
 	packet.header.portFrom = translator.byteArrayToNumber(bytes+12,2);
 	packet.header.portTo = translator.byteArrayToNumber(bytes+14,2);
-	packet.header.id = translator.byteArrayToNumber(bytes+16,2);
-	packet.header.dataSize = translator.byteArrayToNumber(bytes+18,1);
-	packet.header.FrameNum = translator.byteArrayToNumber(bytes+19,1);
+	packet.header.dataSize = translator.byteArrayToNumber(bytes+16,2);
+	packet.header.frameNum = translator.byteArrayToNumber(bytes+18,2);
 	strncpy(packet.data,(const char*)bytes+sizeof(PacketHeader),packet.header.dataSize);
     return packet;
 }
 
 // ----------------------------------------------------------------------------------------------------------------------
 
-void Network::getLocalIp(char * ip, int family){
+std::string Network::getLocalIp(int family){
 	MessageHandler messageHandler;
 	// Get the default network interface.
-	char interface[NETWORK_INTERFACE_MAX_LENGTH];
-	getDefaultInterface(interface);
+	std::string interface =	getDefaultInterface();
 	char host[NI_MAXHOST];
 	// Get all the ifaddrs.
 	struct ifaddrs *ifaddr;
@@ -147,7 +212,7 @@ void Network::getLocalIp(char * ip, int family){
 	//Searches on all the ifaddrs the one who matches the interface.
 	for(struct ifaddrs*it=ifaddr; it!=NULL; it=it->ifa_next){
 		if(it->ifa_addr==NULL) continue;
-		if(strcmp(it->ifa_name, interface)==0){
+		if(strcmp(it->ifa_name, interface.c_str())==0){
 			if (it->ifa_addr->sa_family==family){
 				size_t size = (family==AF_INET)? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6);
 				if(getnameinfo(it->ifa_addr, size, host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST) != 0)
@@ -158,23 +223,26 @@ void Network::getLocalIp(char * ip, int family){
 	// free mem.
 	freeifaddrs(ifaddr);
 	// return ip.
-	strncpy(ip,host,IP_MAX_SIZE);
+	return std::string(host);
 }
 
-void Network::getDefaultInterface(char * interface){
+std::string Network::getDefaultInterface(){
 	FileManager fileManager;
 	fileManager.open("/proc/net/route");
 	char buffer[PROC_NET_ROUTE_LINE_SIZE];
 	int pos;
+	std::string interface;
 	do{// search the default interface on every line of the file.
 		fileManager.getLine(buffer);
 		if(strlen(buffer)!=0){
 			char * c = std::strchr(buffer,'\t');
-			pos = c-buffer+1;
-			strncpy(interface,buffer,pos);
-			interface[pos-1] = '\0';
+			pos = c-buffer;
+			interface = std::string(buffer,pos);
 		}
 	// The deafault interface is the one whose destination is 00000000.
 	}while(strncmp(buffer+pos,"00000000",8)!=0&&strlen(buffer)!=0);
 	fileManager.close();
+	return interface;
 }
+
+// ----------------------------------------------------------------------------------------------------------------------
