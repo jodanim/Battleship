@@ -54,6 +54,9 @@ void Translator::intIptoCharArrayIp(unsigned int ip, char * array){
 	strncpy(array+l1+l2,third,l3);
 	strncpy(array+l1+l2+l3,fourth,l4);
 }
+std::string Translator::intIptoStringIp(unsigned int ip){
+	return std::to_string(ip&0xFF) + "." +std::to_string(ip>>8&0xFF) + "." +std::to_string(ip>>16&0xFF) + "." +std::to_string(ip>>24&0xFF);
+}
 
 //-----------------------------------------------------------------------------------------------------------------------------
 

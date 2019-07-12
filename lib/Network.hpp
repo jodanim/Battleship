@@ -14,24 +14,21 @@
 #include <thread>
 #include <mutex>
 
-bool condition = true;
-#define forever for(int iteration=0;condition;iteration=(iteration+1)%2147489647)
+#define forever for(int iteration=0;;iteration=(iteration+1)%2147489647)
 #define PROC_NET_ROUTE_LINE_SIZE 128
-#define NETWORK_INTERFACE_MAX_LENGTH 15
-#define IP_MAX_SIZE 15
-#define CONECTION_RETRIES 50
+#define CONECTION_RETRIES 30
 
 struct PacketHeader{
-	unsigned int messageSize;													// Full Message Size
-	unsigned int from;															// Sender
-	unsigned int to;															// Receiver
-	unsigned short portFrom;													// Sender port
-	unsigned short portTo;														// Receiver port
-	unsigned short id;															// fragment id
-	unsigned char dataSize;														// 0 - MAX_DATA_SIZE
-	char frameNum;																// 0|1 stop and wait
+	unsigned int messageSize;													// Full Message Size 	0-4
+	unsigned int from;															// Sender				5-8
+	unsigned int to;															// Receiver				9-12
+	unsigned short portFrom;													// Sender port			13-14
+	unsigned short portTo;														// Receiver port		15-16
+	unsigned short dataSize;													// 0 - MAX_DATA_SIZE	17-18
+	unsigned short frameNum;													// 0|1 stop and wait	18-20
 	PacketHeader():frameNum(-1){}
 	PacketHeader(unsigned int ip, unsigned short port):frameNum(-1){to = ip; portTo = port;}
+	PacketHeader(unsigned int ip, unsigned short port, bool inverse):frameNum(-1){from = ip; portFrom = port;}
 	PacketHeader(const char * ip, unsigned short port):frameNum(-1){
 		Translator translator;
 		to = translator.constCharIptoIntIp(ip);
@@ -66,61 +63,65 @@ class Network{
 		~Network();
 		
 		/**
-		 * sendACK
+		 * sendMessage
 		 * 
-		 * EFE: Constructs a packet as an ack packet, and sends it
-		 */
-		void sendACK(PacketHeader header);
-
-		void receiveACK(PacketHeader header, bool &timeout, bool &acknowledged);
-		
-		// Manages timeout
-		void runClock(bool &timeout, bool &acknowledged);
-
-		/**
-		 * 
+		 * EFE: Sends a fragmented message to the given address.
+		 * REQ: header: the receiver address.
+		 * 		message: the message to be send.
 		 */
 		void sendMessage(PacketHeader header, const char * message);
-		
-		// Defragmentation.
-		PacketHeader receiveMessage(char * message);
 
-
-
-		void send(PacketHeader header, const char * data);				// Packet send
-		
-		void sendDone();												
-		void checkPacketAvailable();									// Packet receive
-		PacketHeader receive(char * data, PacketHeader header);								// Packet pickup
+		/**
+		 * receiveMessage
+		 * 
+		 * EFE: Receives fragments of a message from the given address and rebuilds it.
+		 * REQ: header: The sender address.
+		 * REQ: The builded message.
+		 */
+		std::string receiveMessage(PacketHeader header);
+						
 		
 	private:
+		Socket socket;
+		Translator translator;
+
 		// Machine ID
 		unsigned int ip;
 		unsigned short port;
-
-		// Control Flags
-
-		bool firstPacketAvailable;
-		bool exit;
-		int connectionLost;
-
-		Socket socket;
-		std::mutex sendingPacket;
-		std::mutex acknowledge;
-		std::mutex receiving;
-		
-		std::thread receiver;
-		Translator translator;
-		std::vector<Packet> firstPacket;
-		std::map<unsigned int,std::map<unsigned short,std::vector<Packet>>> receivedPackets;
-		std::map<unsigned int,std::map<unsigned short,bool>> incommingMessage;
-		std::map<unsigned int,std::map<unsigned short,char>> receivedACK;
-		std::map<unsigned int,std::map<unsigned short,char>> lastSendedACK;
-
-		std::vector<Packet> fragments;
 		
 		double reliability;
+
+
+		bool exit;																				// End of program control flag
+		int connectionLost;																		// Connection retry counter
+
+		std::thread receiver;																	// Infinite packet receiving loop(until end)
+		std::mutex sendingPacket;																// 
+		std::mutex acknowledging;																// 
+		std::mutex receiving;																	// 
 		
+		std::map<unsigned int,std::map<unsigned short,std::vector<Packet>>> receivedPackets;
+// ----------------------------------------------------------------------------------------------------------------------
+
+		void send(PacketHeader header, const char * data);				// Packet send
+		
+		/**
+		 * writeHandler
+		 * 
+		 * EFE:
+		 */
+		void writeHandler();	
+
+		// Manages timeout
+		void runClock(bool &timeout, bool &acknowledged);
+
+		void receiveACK(PacketHeader header, bool &timeout, bool &acknowledged);
+
+		void sendDone();						
+
+// ----------------------------------------------------------------------------------------------------------------------
+
+		std::string receive(PacketHeader &header);								// Packet pickup
 
 		/**
 		 * readHandler
@@ -128,14 +129,24 @@ class Network{
 		 * EFE:	One packet lecture at time from a especific sender
 		 * REQ: header: sender id 
 		 */
-		void readHandler(PacketHeader header);												
+		void readHandler(PacketHeader header);	
+		
+// ----------------------------------------------------------------------------------------------------------------------
+		/**
+		 * Receives any packet and stores it on a vector inside a multimap
+		 */
+		void checkPacketAvailable();									// Packet receive
 
 		/**
-		 * writeHandler
+		 * sendACK
 		 * 
-		 * EFE:Writes one packet at time
+		 * EFE: Constructs a packet as an ack packet, and sends it
 		 */
-		void writeHandler();	
+		void sendACK(PacketHeader header);
+
+		
+
+// ----------------------------------------------------------------------------------------------------------------------
 
 		/**
 		 * byteArrayToPacket
@@ -143,6 +154,9 @@ class Network{
 		 * EFE: Translates a byte array into a packet.
 		 */
 		Packet byteArrayToPacket(const unsigned char * bytes);
+
+// ----------------------------------------------------------------------------------------------------------------------
+
 		/**
 		 * getLocalIp
 		 * 
@@ -151,7 +165,7 @@ class Network{
 		 * 		family: AF_INET for ipv4 | AF_INET6 for ipv6
 		 * RET: Your local ip.
 		 */ 
-		void getLocalIp(char * ip, int family = AF_INET);
+		std::string getLocalIp(int family = AF_INET);
 
 		/**
 		 * getDefaultInterface
@@ -160,7 +174,8 @@ class Network{
 		 * REQ: interface: A buffer where to store the default interface.
 		 * RET: The default interface on the given buffer.
 		 */
-		void getDefaultInterface(char * interface);
+		std::string getDefaultInterface();
+
 };
 
 #endif /* NETWORK_HPP */

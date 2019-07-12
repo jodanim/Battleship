@@ -25,6 +25,7 @@ class Translator{
 		 * RET: the ip on its normal display on the parameter "array"
 		 */
 		void intIptoCharArrayIp(unsigned int ip, char * array);	
+		std::string intIptoStringIp(unsigned int ip);	
 
 		/**
 		 * byteArrayToNumber
