@@ -67,7 +67,7 @@ class Network{
 		 * 
 		 * EFE: Sends a fragmented message to the given address.
 		 * REQ: header: the receiver address.
-		 * 		message: the message to be send.
+		 * 		message: the message to be sent.
 		 */
 		void sendMessage(PacketHeader header, const char * message);
 
@@ -76,7 +76,7 @@ class Network{
 		 * 
 		 * EFE: Receives fragments of a message from the given address and rebuilds it.
 		 * REQ: header: The sender address.
-		 * REQ: The builded message.
+		 * RET: The builded message.
 		 */
 		std::string receiveMessage(PacketHeader header);
 						
@@ -86,65 +86,92 @@ class Network{
 		Translator translator;
 
 		// Machine ID
-		unsigned int ip;
-		unsigned short port;
+		unsigned int ip;																		// Your IP
+		unsigned short port;																	// Your connection port
 		
-		double reliability;
-
+		double reliability;																		// The message reliability to be send
+		int failcounter;																		// a counter to be printed when the message fails to be sent by its reliability
 
 		bool exit;																				// End of program control flag
 		int connectionLost;																		// Connection retry counter
 
 		std::thread receiver;																	// Infinite packet receiving loop(until end)
-		std::mutex sendingPacket;																// 
-		std::mutex acknowledging;																// 
-		std::mutex receiving;																	// 
+		std::mutex sendingPacket;																// controlls the interaction between send functions
+		std::mutex acknowledging;																// controlls the interaction between runClock() and receiveACK()
+		std::mutex receiving;																	// controlls the interaction between checkPacketAvailable() and receive()
 		
-		std::map<unsigned int,std::map<unsigned short,std::vector<Packet>>> receivedPackets;
+		std::map<unsigned int,std::map<unsigned short,std::vector<Packet>>> receivedPackets;	// Contains all the received packets classified by its ip and its port
 // ----------------------------------------------------------------------------------------------------------------------
 
-		void send(PacketHeader header, const char * data);				// Packet send
+		/**
+		 * send
+		 * 
+		 * EFE: sends a packet to the given address.
+		 * REQ: header: the receiver address.
+		 * 		data: the fragment of a message to be sent.
+		 */
+		void send(PacketHeader header, const char * data);
 		
 		/**
 		 * writeHandler
 		 * 
-		 * EFE:
+		 * EFE: Locks the entrance of a send during another one.
 		 */
-		void writeHandler();	
+		void writeHandler();
 
-		// Manages timeout
+		/**
+		 * runClock
+		 * 
+		 * EFE: Manages the time out between a send and its ack.
+		 * REQ: &timeout: the direction of a shared boolean specifying the time out.
+		 * 		&timeout: the direction of a shared boolean specifying the acknowledgement.
+		 */
 		void runClock(bool &timeout, bool &acknowledged);
 
+		/**
+		 * receiveACK
+		 * EFE: Receives an ack searching inside the receivedPackets multimap
+		 * REQ: The address of the machine who sends the ack to us.
+		 * 		&timeout: the direction of a shared boolean specifying the time out.
+		 * 		&timeout: the direction of a shared boolean specifying the acknowledgement.
+		 */
 		void receiveACK(PacketHeader header, bool &timeout, bool &acknowledged);
 
-		void sendDone();						
+
+		/**
+		 * sendDone
+		 * EFE: Unlocks the entrance for another sends
+		 */
+		void sendDone();
 
 // ----------------------------------------------------------------------------------------------------------------------
 
-		std::string receive(PacketHeader &header);								// Packet pickup
+		std::string receive(PacketHeader &header);
 
 		/**
 		 * readHandler
 		 * 
-		 * EFE:	One packet lecture at time from a especific sender
-		 * REQ: header: sender id 
+		 * EFE:	One packet lecture at time from a especific sender.
+		 * REQ: header: sender address.
 		 */
 		void readHandler(PacketHeader header);	
 		
 // ----------------------------------------------------------------------------------------------------------------------
+		
 		/**
-		 * Receives any packet and stores it on a vector inside a multimap
+		 * checkPacketAvailable
+		 * 
+		 * EFE: Receives any packet and stores it on a vector inside a multimap.
 		 */
-		void checkPacketAvailable();									// Packet receive
+		void checkPacketAvailable();
 
 		/**
 		 * sendACK
 		 * 
-		 * EFE: Constructs a packet as an ack packet, and sends it
+		 * EFE: Constructs a packet as an ack packet, and sends it to the sender.
+		 * REQ: the address of the sender.
 		 */
 		void sendACK(PacketHeader header);
-
-		
 
 // ----------------------------------------------------------------------------------------------------------------------
 
@@ -152,6 +179,7 @@ class Network{
 		 * byteArrayToPacket
 		 * 
 		 * EFE: Translates a byte array into a packet.
+		 * REQ: bytes: The byte array.
 		 */
 		Packet byteArrayToPacket(const unsigned char * bytes);
 
@@ -164,7 +192,7 @@ class Network{
 		 * REQ: ip: A buffer where to store the local ip.
 		 * 		family: AF_INET for ipv4 | AF_INET6 for ipv6
 		 * RET: Your local ip.
-		 */ 
+		 */
 		std::string getLocalIp(int family = AF_INET);
 
 		/**

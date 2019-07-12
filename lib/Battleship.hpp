@@ -18,7 +18,7 @@ class Battleship{
 		/**
 		 * Constructor
 		 * 
-		 * EFE: Initialize variables and starts the battleship game.
+		 * EFE: Initialize variables and starts the battleship game(Smaller port starts).
 		 * REQ: enemyIp: The enemy ip adress.
 		 * 		enemyPort: The enemy port number.
 		 * 		ownPort: your port number to be bind.

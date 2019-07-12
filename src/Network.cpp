@@ -23,6 +23,7 @@ Network::~Network(){
 
 void Network::sendMessage(PacketHeader header, const char * message){
 	if(header.to == 0)header.to = ip;
+	failcounter = 0;
 	connectionLost = 0;
 	header.messageSize = strlen(message);
 	int processedBytes = 0;
@@ -63,7 +64,7 @@ void Network::send(PacketHeader header, const char * data){
 		bool timeout = false;
 		acknowledged = false;
 		if((rand()%100+1) > reliability*100){
-			std::cout<<"\033[31mFAILED\033[0m\n";
+			std::cout<<"\033[1A\033[31mSENDING FAILED "<< failcounter++<<" TIMES.\033[0m\n";
 			timeout = true;
 		}else{
 			socket.Write(buffer,MAX_WIRE_SIZE,header.to,header.portTo);

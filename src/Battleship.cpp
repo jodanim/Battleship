@@ -5,16 +5,12 @@ Battleship::Battleship(const char * enemyIp, unsigned short enemyPort, unsigned 
     network = new Network(ownPort,1);
     setGrid();
     header = new PacketHeader(enemyIp,enemyPort);
-    
-    std::cout<<"Waiting for connection.\n";
-    
+        
     int yourRandom;
     int enemyRandom;
     
     yourTurn = enemyPort>ownPort;
     
-    std::cout<<"first random turn: "<<"You: "<< yourRandom <<" The enemy: "<<enemyRandom<<"\n";
-    sleep(3);
     int pos = 0;
     while(!gameover){
         printGrid(orientation);
