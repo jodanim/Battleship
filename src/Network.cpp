@@ -79,7 +79,7 @@ void Network::sendMessage(PacketHeader header, const char * message){
 		send(header, buffer);
 	}
 	if(connectionLost==CONECTION_RETRIES){
-		//std::cout<<"\033[31mConnection Lost.\033[0m\n";	
+		std::cout<<"\033[31mConnection Lost.\033[0m\n";	
 	}
 	//std::cout<<"End transmission\n\n";
 }
@@ -213,9 +213,6 @@ void Network::readHandler(PacketHeader header){
 	if(header.frameNum==-1){
 		//std::cout<<"There is a packet available?\n";
 		while(firstPacket.empty());
-		for (auto& x: firstPacket) {
-    		//std::cout << x.data<<'\n';
-  		}
 	}else{
 		//std::cout<<"There is the next packet available from "<<header.from<<":"<<header.portFrom<<"?\n";
 		while(receivedPackets[header.from][header.portFrom].empty());

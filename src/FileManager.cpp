@@ -1,7 +1,5 @@
 #include "../lib/FileManager.hpp"
 
-FileManager::FileManager(){}
-
 FileManager::~FileManager(){
 	input.close();
 }
