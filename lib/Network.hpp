@@ -14,19 +14,12 @@
 #include <thread>
 #include <mutex>
 
+bool condition = true;
+#define forever for(int iteration=0;condition;iteration=(iteration+1)%2147489647)
 #define PROC_NET_ROUTE_LINE_SIZE 128
 #define NETWORK_INTERFACE_MAX_LENGTH 15
 #define IP_MAX_SIZE 15
-#define CONECTION_RETRIES 10
-
-#define forever for(int iteration=0;;iteration++)
-
-struct ACK{
-	unsigned int ip;															
-	unsigned short port;														
-	unsigned char frameNum;															// fragment id
-	ACK(unsigned int dir, unsigned short p, unsigned short n){ip = dir; port = p; frameNum = n;}
-};
+#define CONECTION_RETRIES 50
 
 struct PacketHeader{
 	unsigned int messageSize;													// Full Message Size
@@ -56,22 +49,43 @@ struct Packet{
 
 class Network{
 	public:
-		// Constructor.
+		/**
+		 * Constructor
+		 * 
+		 * EFE: Initializes the variables, bind the socket port and starts the infinite packet available checker
+		 * REQ: Port: Where to bind the socket.
+		 * 		Reliablity: the probability of socket failure.
+		 */ 
 		Network(int Port, double reliability);
-		// Destructor.
+
+		/**
+		 * Destructor
+		 * 
+		 * EFE: Terminates the infinite packet available checker.
+		 */ 
 		~Network();
 		
-		// Packet Fragmentation.
-		void sendMessage(PacketHeader header, const char * message);
-		// Defragmentation.
-		PacketHeader receiveMessage(char * message);
-
+		/**
+		 * sendACK
+		 * 
+		 * EFE: Constructs a packet as an ack packet, and sends it
+		 */
 		void sendACK(PacketHeader header);
 
 		void receiveACK(PacketHeader header, bool &timeout, bool &acknowledged);
 		
 		// Manages timeout
 		void runClock(bool &timeout, bool &acknowledged);
+
+		/**
+		 * 
+		 */
+		void sendMessage(PacketHeader header, const char * message);
+		
+		// Defragmentation.
+		PacketHeader receiveMessage(char * message);
+
+
 
 		void send(PacketHeader header, const char * data);				// Packet send
 		
@@ -108,12 +122,45 @@ class Network{
 		double reliability;
 		
 
+		/**
+		 * readHandler
+		 * 
+		 * EFE:	One packet lecture at time from a especific sender
+		 * REQ: header: sender id 
+		 */
+		void readHandler(PacketHeader header);												
 
-		void readHandler(PacketHeader header);												// one packet lecture at time
-		void writeHandler();											// one packet write at time
-		Packet byteArrayToPacket(const unsigned char * bytes);			// gets an array of bytes and transforms it into a packet
-		void getLocalIp(char * ip, int family = AF_INET);				// gets this machine local ip
-		void getDefaultInterface(char * interface);						// gets this machine default interface from "/proc/net/route"
+		/**
+		 * writeHandler
+		 * 
+		 * EFE:Writes one packet at time
+		 */
+		void writeHandler();	
+
+		/**
+		 * byteArrayToPacket
+		 * 
+		 * EFE: Translates a byte array into a packet.
+		 */
+		Packet byteArrayToPacket(const unsigned char * bytes);
+		/**
+		 * getLocalIp
+		 * 
+		 * EFE: Gets this machine local ip
+		 * REQ: ip: A buffer where to store the local ip.
+		 * 		family: AF_INET for ipv4 | AF_INET6 for ipv6
+		 * RET: Your local ip.
+		 */ 
+		void getLocalIp(char * ip, int family = AF_INET);
+
+		/**
+		 * getDefaultInterface
+		 * 
+		 * EFE: Gets this machine default interface from "/proc/net/route"
+		 * REQ: interface: A buffer where to store the default interface.
+		 * RET: The default interface on the given buffer.
+		 */
+		void getDefaultInterface(char * interface);
 };
 
 #endif /* NETWORK_HPP */
