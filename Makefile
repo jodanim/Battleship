@@ -48,15 +48,31 @@ obj/Player.obj: src/Player.cpp
 	@echo "\033[1;35mGenerating \033[0;33m$@\033[0m"
 	@g++ -c $^ -o $@
 
+obj/Receiver.obj: src/Receiver.cpp
+	@echo "\033[1;35mGenerating \033[0;33m$@\033[0m"
+	@g++ -c $^ -o $@
+
+obj/Sender.obj: src/Sender.cpp
+	@echo "\033[1;35mGenerating \033[0;33m$@\033[0m"
+	@g++ -c $^ -o $@
+	
 ################################################################################
 
 bin/Player: obj/Socket.obj obj/MessageHandler.obj obj/FileManager.obj obj/Translator.obj obj/Network.obj obj/Battleship.obj obj/Player.obj 
 	@echo "\033[1;35mGenerating \033[0;33m$@\033[0m"
 	@g++ -pthread $^ -o $@
 
+bin/Receiver: obj/Socket.obj obj/MessageHandler.obj obj/FileManager.obj obj/Translator.obj obj/Network.obj obj/Battleship.obj obj/Receiver.obj 
+	@echo "\033[1;35mGenerating \033[0;33m$@\033[0m"
+	@g++ -pthread $^ -o $@
+
+bin/Sender: obj/Socket.obj obj/MessageHandler.obj obj/FileManager.obj obj/Translator.obj obj/Network.obj obj/Battleship.obj obj/Sender.obj 
+	@echo "\033[1;35mGenerating \033[0;33m$@\033[0m"
+	@g++ -pthread $^ -o $@
+	
 ################################################################################
 
-compile:compileMessage bin/Player
+compile:compileMessage bin/Player bin/Sender bin/Receiver
 
 run_player1: compile runMessage
 	@./bin/Player 0.0.0.0 1101 1102 0
@@ -66,6 +82,14 @@ run_player2: compile runMessage
 	@./bin/Player 0.0.0.0 1102 1101 1
 	@make finished --no-print-directory
 	
+run_receiver: compile runMessage
+	@./bin/Receiver 0.0.0.0 1102 1101
+	@make finished --no-print-directory
+	
+run_sender: compile runMessage
+	@./bin/Sender 0.0.0.0 1101 1102 0.1 "Este mensaje es lo suficientemente largo para ser fragmentado por el programa que lo envía y ser desfragmentado por el programa que lo recibe." 10
+	@make finished --no-print-directory
+		
 ################################################################################
 
 compileMessage:
