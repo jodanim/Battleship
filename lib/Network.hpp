@@ -94,6 +94,7 @@ class Network{
 
 		bool exit;																				// End of program control flag
 		int connectionLost;																		// Connection retry counter
+		int timeoutLimit;																		// The time out limit
 
 		std::thread receiver;																	// Infinite packet receiving loop(until end)
 		std::mutex sendingPacket;																// controlls the interaction between send functions

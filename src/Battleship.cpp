@@ -160,7 +160,7 @@ void Battleship::printCell(CellState state){
     }else if(state == filled){
         std::cout<<"\033[35m███\033[0m";
     }else if(state == destroyed){
-        std::cout<<"\033[48:5:196m   \033[0m";
+        std::cout<<"\033[41m   \033[0m";
     }else{
         std::cout<<"\033[1;30m▒▒▒\033[0m";
     }
@@ -169,7 +169,7 @@ void Battleship::printCell(CellState state){
 void Battleship::printGrid(int orientation){
     if(orientation == horizontal){
         std::cout<<"\033[0;0f";
-        std::cout<<"\033[K\033[32m                Your Board                                     Enemy Board               \033[0m\n";
+        std::cout<<"\033[K\033[32m                Your Board                                     \033[31mEnemy Board               \033[0m\n";
         std::cout<<"\033[K\033[1;32m   0   1   2   3   4   5   6   7   8   9        0   1   2   3   4   5   6   7   8   9  \033[0m\n";
         std::cout<<"\033[K\033[1;34m ╔═══╦═══╦═══╦═══╦═══╦═══╦═══╦═══╦═══╦═══╗    ╔═══╦═══╦═══╦═══╦═══╦═══╦═══╦═══╦═══╦═══╗\033[0m\n";
         for(int i = 0; i < 10; i++){

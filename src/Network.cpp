@@ -23,6 +23,7 @@ Network::~Network(){
 
 void Network::sendMessage(PacketHeader header, const char * message){
 	if(header.to == 0)header.to = ip;
+	timeoutLimit = 2500;
 	failcounter = 0;
 	connectionLost = 0;
 	header.messageSize = strlen(message);
@@ -83,13 +84,13 @@ void Network::writeHandler(){
 }
 
 void Network::runClock(bool &timeout, bool &acknowledged){
-	for(int i = 0; i < 2500; i++){
+	for(int i = 0; i < timeoutLimit; i++){
 		usleep(1);
 		if(acknowledged)pthread_exit(NULL);
 	}
-	
 	acknowledging.lock();
 	if(!acknowledged){
+		if(reliability == 1)timeoutLimit *= 2;
 		timeout = true;
 		connectionLost++;
 		std::cout<<connectionLost<<": Timeout\n";
