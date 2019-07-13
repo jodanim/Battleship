@@ -14,6 +14,8 @@ Existen los siguientes comandos en el Makefile, que pueden ser utilizados para e
 	
 Estos inician los programas mencionados anteriormente, con argumentos predeterminados visibles en el Makefile.
 
+Estos deben de ser ejecutados en parejas, "Receiver" con "Sender" y "Player1" con "Player2".
+
 En caso de no querer utilizar los argumentos predeterminados, es posible optar por correr los programas con cero argumentos por consola "./bin/<programa>", estos informarán que argumentos son necesarios para poder ejecutarlos correctamente.
 
 Los programas no cuentan con chequeo de argumentos por lo que si se ingresan datos inválidos pueden suceder cosas raras.
