@@ -27,7 +27,6 @@ int main(int argc, char**argv){
     for(int i = 0; i<atoi(argv[6]);i++){
 		std::cout<<"\n\033[6,0fEnvio #"<<i+1<<"\n\n";
     	n.sendMessage(header,argv[5]);
-    	usleep(100000);
     }
     return EXIT_SUCCESS;
 }
