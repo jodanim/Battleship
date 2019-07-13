@@ -4,7 +4,7 @@
 Network::Network(int port, double reliability){
 	srand(time(NULL));
 	this->reliability = (reliability<0)? 0 : (reliability>1)? 1 : reliability;
-	timeoutLimit = 50000;
+	timeoutLimit = 10000;
 	exit = false;
 	std::string localIp = getLocalIp();	
 	ip = translator.constCharIptoIntIp(localIp.c_str());
@@ -86,11 +86,15 @@ void Network::writeHandler(){
 void Network::runClock(bool &timeout, bool &acknowledged){
 	for(int i = 0; i < timeoutLimit; i++){
 		usleep(1);
-		if(acknowledged)pthread_exit(NULL);
+		if(acknowledged){
+			if(i >= timeoutLimit-200){
+				timeoutLimit += 200;
+			}
+			pthread_exit(NULL);
+		}
 	}
 	acknowledging.lock();
 	if(!acknowledged){
-		if(reliability == 1)timeoutLimit *= 2;
 		timeout = true;
 		connectionLost++;
 		std::cout<<connectionLost<<": Timeout\n";

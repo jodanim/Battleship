@@ -15,11 +15,11 @@ Battleship::Battleship(const char * enemyIp, unsigned short enemyPort, unsigned 
     while(!gameover){
         printGrid(orientation);
         if(yourTurn){
-            std::cout<<"\033[KYour turn, select a coordinate to attack:\n\033[K";
+            std::cout<<"\n\033[KYour turn, select a coordinate to attack:\n\033[J";
             pos = getInput();
             attack(pos);
         }else{
-            std::cout<<"\033[KWaiting for enemy move.\n\033[K";
+            std::cout<<"\n\033[KWaiting for enemy move.\n\n\033[J\n\033[2A\n";
             pos = atoi(network->receiveMessage(*header).c_str());
             updateGrid(pos);
         }
@@ -42,23 +42,33 @@ int Battleship::getCoordinate(std::string coordinate){
     if(coordinate.size()>2){
         return -1;
     }  
-    x = coordinate.at(1)-'1';
-    if(coordinate.at(0)<'a'){
-        y = coordinate.at(0) - 'A';
+    if(coordinate.at(1)>='0' && coordinate.at(1)<='9'){
+        x = coordinate.at(1)-'1';
     }else{
+        return -1;
+    }
+    if(coordinate.at(0)>='A' && coordinate.at(0)<='J'){
+        y = coordinate.at(0) - 'A';
+    }else if(coordinate.at(0)>='a' && coordinate.at(0)<='j'){
         y = coordinate.at(0) - 'a';
+    }else{
+        return -1;
     }
     return y*10+x+1;
 }
 
 int Battleship::getInput(){
     std::string input;
-    int coordinate;
+    int coordinate = -1;
     do{
         getline(std::cin,input);
-        coordinate = getCoordinate(input);
-        if(coordinate == -1 || coordinate >= 100){
-            std::cout<<"\033[1;31mWrong input\n";
+        if(input.size()==2){
+            coordinate = getCoordinate(input);
+            if(coordinate == -1 || coordinate >= 100){
+                std::cout<<"\033[1;31mWrong input\033[0m\n\033[2A\033[K";
+            }
+        }else{
+            std::cout<<"\033[1;31mWrong input\033[0m\n\033[2A\033[K";
         }
     }while(coordinate == -1 || coordinate >= 100);
     return coordinate;
