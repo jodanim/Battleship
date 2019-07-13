@@ -25,7 +25,7 @@ int main(int argc, char**argv){
     Network n(atoi(argv[3]),atof(argv[4]));
     PacketHeader header(argv[1],atoi(argv[2]));
     for(int i = 0; i<atoi(argv[6]);i++){
-		std::cout<<"\n\033[6,0fEnvio #"<<i+1<<"\n\n";
+		std::cout<<"\nEnvio #"<<i+1<<"\n\n";
     	n.sendMessage(header,argv[5]);
     }
     return EXIT_SUCCESS;
