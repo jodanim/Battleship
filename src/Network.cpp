@@ -4,6 +4,7 @@
 Network::Network(int port, double reliability){
 	srand(time(NULL));
 	this->reliability = (reliability<0)? 0 : (reliability>1)? 1 : reliability;
+	timeoutLimit = 50000;
 	exit = false;
 	std::string localIp = getLocalIp();	
 	ip = translator.constCharIptoIntIp(localIp.c_str());
@@ -23,7 +24,6 @@ Network::~Network(){
 
 void Network::sendMessage(PacketHeader header, const char * message){
 	if(header.to == 0)header.to = ip;
-	timeoutLimit = 2500;
 	failcounter = 0;
 	connectionLost = 0;
 	header.messageSize = strlen(message);
